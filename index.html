@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f0f0f0" id="theme-color-meta">
+<title>Taller Argentona</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ── TEMA CLAR ─────────────────────────────────────── */
+:root {
+  --bg:#f2f2f7; --s1:#ffffff; --s2:#e8e8ed; --s3:#d8d8dd;
+  --bd:#c8c8cd; --tx:#1c1c1e; --mu:#6d6d72; --mu2:#aeaeb2;
+  --green:#1a8a3c; --gbg:#e8f5ec; --gbd:rgba(26,138,60,.3);
+  --blue:#0055cc; --bbg:#e6eeff; --bbd:rgba(0,85,204,.3);
+  --orange:#b85c00; --obg:#fff0e0; --obd:rgba(184,92,0,.3);
+  --red:#cc2222; --rbg:#ffecec; --rbd:rgba(204,34,34,.25);
+  --gold:#9a6800; --goldbg:#fff8e6; --goldborder:rgba(154,104,0,.3);
+  --purple:#6600cc; --pbg:#f0e6ff;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.14);
+  --r:14px;
+}
+/* ── TEMA FOSC ──────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg:#1c1c1e; --s1:#2c2c2e; --s2:#3a3a3c; --s3:#48484a;
+  --bd:#48484a; --tx:#f2f2f7; --mu:#aeaeb2; --mu2:#6d6d72;
+  --green:#30d158; --gbg:rgba(48,209,88,.15); --gbd:rgba(48,209,88,.4);
+  --blue:#4f9cf9; --bbg:rgba(79,156,249,.15); --bbd:rgba(79,156,249,.4);
+  --orange:#ff9f0a; --obg:rgba(255,159,10,.15); --obd:rgba(255,159,10,.4);
+  --red:#ff453a; --rbg:rgba(255,69,58,.12); --rbd:rgba(255,69,58,.3);
+  --gold:#ffd60a; --goldbg:rgba(255,214,10,.12); --goldborder:rgba(255,214,10,.4);
+  --purple:#bf5af2; --pbg:rgba(191,90,242,.15);
+  --shadow:0 2px 12px rgba(0,0,0,.3);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.5);
+}
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; -webkit-font-smoothing:antialiased }
+html,body { height:100%; overflow:hidden }
+body { background:var(--bg); color:var(--tx); font-family:'DM Sans',sans-serif; max-width:430px; margin:0 auto; display:flex; flex-direction:column; height:100dvh; transition:background .3s,color .3s }
+
+/* HEADER */
+.hdr { padding:14px 18px 10px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; background:var(--s1); border-bottom:1px solid var(--bd); box-shadow:var(--shadow) }
+.logo { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; color:var(--gold) }
+.logo b { color:var(--tx); font-weight:400 }
+.hright { display:flex; align-items:center; gap:8px }
+.hbadge { background:var(--gold); color:var(--s1); font-size:12px; font-weight:700; padding:4px 12px; border-radius:20px; min-width:32px; text-align:center }
+.hbtn { background:var(--s2); border:1px solid var(--bd); border-radius:10px; color:var(--mu); font-size:15px; padding:7px 11px; cursor:pointer; transition:background .2s; line-height:1 }
+.hbtn:active { background:var(--s3) }
+
+/* SEARCH */
+.sbar { flex-shrink:0; padding:10px 18px; background:var(--bg) }
+.swrap { position:relative }
+.sinput { width:100%; background:var(--s1); border:1.5px solid var(--bd); border-radius:12px; padding:11px 14px 11px 40px; color:var(--tx); font-family:'DM Sans',sans-serif; font-size:15px; outline:none; -webkit-appearance:none; transition:border-color .2s }
+.sinput:focus { border-color:var(--gold) }
+.sinput::placeholder { color:var(--mu2) }
+.sico { position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:15px; pointer-events:none; color:var(--mu2) }
+
+/* SCREENS */
+.screen { display:none; flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch }
+.screen.active { display:flex; flex-direction:column }
+.screen-inner { padding:14px 18px 20px; flex:1 }
+
+/* ADD SCREEN */
+#screen-add .screen-inner { padding-bottom:40px }
+.back-bar { display:flex; align-items:center; gap:12px; margin-bottom:16px }
+.back-btn { background:var(--s2); border:none; border-radius:10px; padding:8px 14px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; color:var(--mu); cursor:pointer; display:flex; align-items:center; gap:5px }
+.back-btn:active { background:var(--s3) }
+.ftitle { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:3px; color:var(--gold); line-height:1 }
+
+/* BOTTOM NAV */
+.bnav { flex-shrink:0; background:var(--s1); border-top:1px solid var(--bd); padding:8px 14px 20px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; box-shadow:0 -2px 12px rgba(0,0,0,.06) }
+.bnav.hidden { display:none }
+.nbtn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:10px 6px; border:none; border-radius:12px; font-family:'DM Sans',sans-serif; font-weight:600; font-size:12px; cursor:pointer; transition:all .2s; width:100%; line-height:1.2; background:var(--s2); color:var(--mu) }
+.nbtn:active { opacity:.75 }
+.nbtn .ico { font-size:22px }
+.nbtn.sel { box-shadow:inset 0 0 0 2px currentColor }
+.nbtn-active.sel { background:var(--bbg); color:var(--blue) }
+.nbtn-map.sel { background:var(--pbg); color:var(--purple) }
+.nbtn-done.sel { background:var(--s3); color:var(--mu) }
+
+/* FAB */
+.fab { position:fixed; bottom:96px; right:18px; z-index:50; background:var(--green); color:#fff; border:none; border-radius:20px; padding:14px 20px; font-family:'DM Sans',sans-serif; font-weight:700; font-size:15px; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,.2); display:flex; align-items:center; gap:7px; transition:transform .15s }
+.fab:active { transform:scale(.95) }
+.fab.hidden { display:none }
+
+/* VEHICLE CARD */
+.vcard { background:var(--s1); border-radius:var(--r); padding:15px; margin-bottom:10px; cursor:pointer; transition:transform .12s; border:1px solid var(--bd); border-left:5px solid var(--bd); box-shadow:var(--shadow) }
+.vcard:active { transform:scale(.98) }
+.vcard.loc { border-left-color:var(--green) }
+.vcard.noloc { border-left-color:var(--orange) }
+.vcard.vdone { border-left-color:var(--mu2); opacity:.7 }
+.vplate { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:4px; margin-bottom:2px }
+.vclient { font-size:14px; color:var(--mu); margin-bottom:6px }
+.vmodel { font-size:13px; color:var(--mu); margin-bottom:6px; display:flex; align-items:center; gap:5px }
+.vloc { font-size:13px; color:var(--mu); background:var(--s2); padding:7px 10px; border-radius:10px; margin-bottom:8px; line-height:1.4 }
+.vrow { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap }
+.vpill { font-size:11px; font-weight:700; padding:5px 11px; border-radius:20px; text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; flex-shrink:0 }
+.pill-repair { background:var(--bbg); color:var(--blue) }
+.pill-ready { background:var(--gbg); color:var(--green) }
+.pill-done { background:var(--s2); color:var(--mu) }
+.vacts { display:flex; gap:6px; flex-shrink:0 }
+.vact { height:36px; border-radius:10px; border:1.5px solid var(--bd); font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; padding:0 11px; white-space:nowrap; transition:opacity .15s }
+.vact:active { opacity:.7 }
+.vact-deliver { background:var(--gbg); color:var(--green); border-color:var(--gbd) }
+.vact-wa { background:var(--gbg); color:var(--green); border-color:var(--gbd); padding:0 10px }
+.vact-del { background:var(--rbg); color:var(--red); border-color:var(--rbd); padding:0 10px }
+.vthumb { width:50px; height:50px; object-fit:cover; border-radius:10px; float:right; margin-left:12px; border:1.5px solid var(--bd) }
+
+/* FORM */
+.fld { margin-bottom:14px }
+.flabel { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--mu); margin-bottom:7px; display:block }
+.flnote { font-size:10px; color:var(--orange); font-weight:500; text-transform:none; letter-spacing:0; margin-left:4px }
+.finput { width:100%; background:var(--s1); border:1.5px solid var(--bd); border-radius:12px; padding:13px 15px; color:var(--tx); font-family:'DM Sans',sans-serif; font-size:16px; outline:none; transition:border-color .2s,background .2s; -webkit-appearance:none; appearance:none }
+.finput:focus { border-color:var(--gold); background:var(--s1) }
+.finput::placeholder { color:var(--mu2) }
+#ip { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:5px; text-transform:uppercase }
+textarea.finput { resize:none; min-height:74px; line-height:1.5 }
+.frow { display:flex; gap:10px }
+.frow .fld { flex:1 }
+.crow { display:flex; gap:8px }
+.crow .finput { flex:1 }
+.cpick { background:var(--s1); border:1.5px solid var(--bd); border-radius:12px; padding:13px 15px; font-size:20px; cursor:pointer; line-height:1; flex-shrink:0; transition:background .2s }
+.cpick:active { background:var(--s2) }
+
+/* STATUS PICKER */
+.spicker { display:grid; grid-template-columns:repeat(3,1fr); gap:8px }
+.spick { padding:13px 6px; border-radius:12px; border:1.5px solid var(--bd); background:var(--s2); color:var(--mu); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; text-align:center; transition:all .2s }
+.spick:active { opacity:.75 }
+.spick.sr { background:var(--bbg); border-color:var(--blue); color:var(--blue) }
+.spick.sg { background:var(--gbg); border-color:var(--green); color:var(--green) }
+.spick.sd { background:var(--s2); border-color:var(--mu2); color:var(--mu) }
+
+/* CAMERA ZONE */
+.camz { border:2px dashed var(--bd); border-radius:14px; padding:20px; text-align:center; cursor:pointer; position:relative; overflow:hidden; background:var(--s1); transition:border-color .2s }
+.camz:active { border-color:var(--gold) }
+.camz input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; padding:0; border:none; background:transparent }
+.camico { font-size:30px; display:block; margin-bottom:6px; pointer-events:none }
+.camlbl { font-size:14px; color:var(--mu); pointer-events:none; line-height:1.5 }
+
+/* PHOTO GRID */
+.pgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px }
+.pitem { position:relative; aspect-ratio:1; border-radius:12px; overflow:hidden; border:1.5px solid var(--bd) }
+.pthumb { width:100%; height:100%; object-fit:cover; display:block }
+.pdel { position:absolute; top:4px; right:4px; width:24px; height:24px; background:rgba(0,0,0,.65); border-radius:50%; border:none; color:#fff; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; z-index:2 }
+.pbadge { position:absolute; bottom:4px; left:4px; background:var(--gold); color:#fff; font-size:9px; font-weight:700; padding:2px 6px; border-radius:6px; text-transform:uppercase }
+
+/* OCR BAR */
+.ocrbar { display:none; align-items:center; gap:10px; padding:12px 14px; background:var(--goldbg); border:1.5px solid var(--goldborder); border-radius:12px; margin-top:10px; font-size:14px; color:var(--gold); font-weight:600 }
+.ocrbar.on { display:flex }
+
+/* GPS INFO */
+.gpsinfo { font-size:14px; color:var(--green); padding:10px 14px; background:var(--gbg); border:1.5px solid var(--gbd); border-radius:12px; display:none; margin-bottom:10px }
+
+/* BUTTONS */
+.bbtn { width:100%; padding:16px; border:none; border-radius:14px; font-family:'DM Sans',sans-serif; font-weight:700; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px; transition:opacity .15s,transform .1s }
+.bbtn:active { opacity:.8; transform:scale(.99) }
+.bbtn:last-child { margin-bottom:0 }
+.bbtn-submit { background:var(--green); color:#fff; font-size:18px; padding:18px; box-shadow:0 4px 16px rgba(26,138,60,.3) }
+.bbtn-clear { background:var(--s2); color:var(--mu); border:1.5px solid var(--bd) }
+.bbtn-gps { background:var(--gbg); color:var(--green); border:1.5px solid var(--gbd) }
+.bbtn-wa { background:var(--gbg); color:#1a7a30; border:1.5px solid var(--gbd) }
+.bbtn-wa2 { background:#e8f8ee; color:#128c44; border:1.5px solid rgba(18,140,68,.3) }
+.bbtn-copy { background:var(--bbg); color:var(--blue); border:1.5px solid var(--bbd) }
+.bbtn-deliver { background:var(--green); color:#fff; font-size:17px; padding:17px; box-shadow:0 4px 14px rgba(26,138,60,.25) }
+.bbtn-close { background:var(--s2); color:var(--mu); border:1.5px solid var(--bd) }
+
+/* MODAL */
+.mo { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:100; display:flex; align-items:flex-end; opacity:0; pointer-events:none; transition:opacity .25s; backdrop-filter:blur(2px) }
+.mo.open { opacity:1; pointer-events:all }
+.md { width:100%; max-width:430px; margin:0 auto; background:var(--s1); border-radius:22px 22px 0 0; padding:18px 18px 40px; transform:translateY(100%); transition:transform .3s cubic-bezier(.2,.8,.3,1); border-top:1px solid var(--bd); max-height:93dvh; overflow-y:auto; box-shadow:var(--shadow-lg) }
+.mo.open .md { transform:translateY(0) }
+.mhandle { width:44px; height:5px; background:var(--bd); border-radius:3px; margin:0 auto 18px }
+.mplate { font-family:'Bebas Neue',sans-serif; font-size:38px; letter-spacing:6px; margin-bottom:4px }
+.ibox { background:var(--s2); border-radius:12px; padding:13px; margin-bottom:10px; font-size:15px; color:var(--mu); line-height:1.65 }
+.ibox strong { color:var(--tx); font-weight:600 }
+.ibox a { color:var(--blue); text-decoration:none; font-size:14px }
+.ibox.green { background:var(--gbg); border-left:4px solid var(--green) }
+.divider { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:var(--mu2); margin:16px 0 12px; display:flex; align-items:center; gap:8px }
+.divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--bd) }
+
+/* PHOTO SCROLL */
+.pscroll { display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; margin-bottom:14px; scroll-snap-type:x mandatory }
+.pscroll::-webkit-scrollbar { display:none }
+.pscroll img { width:110px; height:80px; object-fit:cover; border-radius:10px; flex-shrink:0; border:1.5px solid var(--bd); cursor:pointer; scroll-snap-align:start }
+.pscroll img.pl { border-color:var(--gold); border-width:2px }
+
+/* MODAL STATUS ROW */
+.mstrow { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px }
+.msp { padding:12px 4px; border-radius:12px; border:1.5px solid var(--bd); background:var(--s2); color:var(--mu); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; cursor:pointer; text-align:center; transition:all .2s }
+.msp:active { opacity:.75 }
+.msp.sr { background:var(--bbg); border-color:var(--blue); color:var(--blue) }
+.msp.sg { background:var(--gbg); border-color:var(--green); color:var(--green) }
+.msp.sd { background:var(--s2); border-color:var(--mu2); color:var(--mu) }
+.msp-disabled { opacity:.4; cursor:not-allowed; pointer-events:none }
+
+/* LIGHTBOX */
+.lb { position:fixed; inset:0; background:rgba(0,0,0,.96); z-index:200; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s }
+.lb.open { opacity:1; pointer-events:all }
+.lb img { max-width:100%; max-height:100dvh; object-fit:contain }
+.lbx { position:absolute; top:20px; right:20px; width:42px; height:42px; background:rgba(255,255,255,.15); border:none; color:#fff; border-radius:50%; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px) }
+.lbn { position:absolute; top:50%; transform:translateY(-50%); width:48px; height:48px; background:rgba(255,255,255,.12); border:none; color:#fff; border-radius:50%; font-size:26px; cursor:pointer; display:flex; align-items:center; justify-content:center }
+
+/* TOAST */
+.toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-80px); background:var(--tx); color:var(--bg); padding:13px 22px; border-radius:14px; font-size:15px; font-weight:700; z-index:300; transition:transform .3s cubic-bezier(.2,.8,.3,1); box-shadow:var(--shadow-lg); max-width:90vw; text-align:center }
+.toast.show { transform:translateX(-50%) translateY(0) }
+.toast.ok { background:var(--green); color:#fff }
+.toast.warn { background:var(--orange); color:#fff }
+.toast.err { background:var(--red); color:#fff }
+
+/* SPIN */
+.spin { display:inline-block; width:16px; height:16px; border:2.5px solid rgba(0,0,0,.15); border-top-color:currentColor; border-radius:50%; animation:sp .7s linear infinite; flex-shrink:0 }
+[data-theme="dark"] .spin { border-color:rgba(255,255,255,.15); border-top-color:currentColor }
+@keyframes sp { to { transform:rotate(360deg) } }
+
+/* SYNC DOT */
+.sdot { position:fixed; bottom:8px; left:50%; transform:translateX(-50%); width:8px; height:8px; border-radius:50%; background:var(--green); z-index:40; transition:background .3s }
+.sdot.sync { background:var(--orange); animation:pulse 1s infinite }
+.sdot.err { background:var(--red) }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* EMPTY */
+.empty { text-align:center; padding:50px 20px; color:var(--mu2) }
+.empty-ico { font-size:52px; margin-bottom:12px; display:block }
+.empty-txt { font-size:15px; line-height:1.7; color:var(--mu) }
+
+/* MAP */
+#map-ct { border-radius:14px; overflow:hidden; border:1.5px solid var(--bd); background:var(--s2); flex-shrink:0 }
+#map-lg { margin-top:12px; flex:1; overflow-y:auto }
+.mitem { display:flex; align-items:center; gap:10px; padding:13px; background:var(--s1); border-radius:14px; margin-bottom:8px; cursor:pointer; border:1.5px solid var(--bd); box-shadow:var(--shadow) }
+.mitem:active { background:var(--s2) }
+.mplate2 { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px }
+.minfo { font-size:12px; color:var(--mu); flex:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
+.mdeliver { background:var(--gbg); color:var(--green); border:1.5px solid var(--gbd); border-radius:10px; padding:8px 12px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; white-space:nowrap }
+.mdeliver:active { opacity:.75 }
+
+/* UPLOAD PROGRESS */
+.upload-progress { width:100%; height:4px; background:var(--s2); border-radius:2px; overflow:hidden; margin-top:6px; display:none }
+.upload-progress.on { display:block }
+.upload-bar { height:100%; background:var(--green); border-radius:2px; transition:width .3s; width:0% }
+
+/* SECTION TITLE */
+.stitle { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--mu); margin-bottom:10px; padding-top:4px }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">TALLER <b>ARGENTONA</b></div>
+  <div class="hright">
+    <button class="hbtn" id="theme-btn" onclick="toggleTheme()" title="Mode fosc/clar">&#x1F31E;</button>
+    <button class="hbtn" onclick="showBackup()" title="Copia de seguretat">&#x1F4BE;</button>
+    <div class="hbadge" id="badge">0</div>
+  </div>
+</div>
+
+<div class="sbar" id="searchbar">
+  <div class="swrap">
+    <span class="sico">&#x1F50D;</span>
+    <input class="sinput" id="search" placeholder="Cerca matricula o client..." oninput="renderList()" autocomplete="off" autocorrect="off" spellcheck="false">
+  </div>
+</div>
+
+<!-- SCREENS -->
+<div class="screen" id="screen-active">
+  <div class="screen-inner">
+    <div id="list-active"></div>
+  </div>
+</div>
+
+<div class="screen" id="screen-map" style="padding:14px 18px 14px">
+  <div id="map-ct" style="height:55dvh"></div>
+  <div id="map-lg"></div>
+</div>
+
+<div class="screen" id="screen-done">
+  <div class="screen-inner">
+    <div id="list-done"></div>
+  </div>
+</div>
+
+<div class="screen active" id="screen-add">
+  <div class="screen-inner">
+    <div class="back-bar">
+      <button class="back-btn" onclick="setTab('active')">&#x2190; Tornar</button>
+      <div class="ftitle">NOU VEHICLE</div>
+    </div>
+
+    <div class="fld">
+      <span class="flabel">&#x1F4F8; Fotos<span class="flnote">1a foto: detecta matricula, model i color + GPS</span></span>
+      <div class="camz">
+        <span class="camico">&#x1F4F7;</span>
+        <span class="camlbl">Toca per fer una foto o triar de la galeria<br><small style="color:var(--mu2)">Pots seleccionar diverses alhora</small></span>
+        <input type="file" accept="image/*" capture="environment" id="photo-input" onchange="handlePhotos(event)" multiple>
+      </div>
+      <div class="ocrbar" id="ocrbar"><div class="spin"></div><span id="ocrmsg">Analitzant vehicle...</span></div>
+      <div class="upload-progress" id="upload-progress"><div class="upload-bar" id="upload-bar"></div></div>
+      <div class="pgrid" id="pgrid"></div>
+    </div>
+
+    <div class="fld">
+      <span class="flabel">Matricula</span>
+      <input class="finput" type="text" id="ip" placeholder="0000ABC" maxlength="12" autocomplete="off" autocorrect="off" spellcheck="false" oninput="this.value=this.value.toUpperCase();checkExistingVehicle(this.value)">
+    </div>
+
+    <div id="existing-vehicle-hint" style="display:none;margin-top:-8px;margin-bottom:12px;padding:10px 14px;background:var(--obg);border:1.5px solid var(--obd);border-radius:12px;font-size:13px;color:var(--orange)"></div>
+
+    <div class="fld">
+      <span class="flabel">Client</span>
+      <div class="crow">
+        <input class="finput" id="ic" type="text" placeholder="Nom del client..." autocomplete="off">
+        <button class="cpick" onclick="pickContact()">&#x1F464;</button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <span class="flabel">Telefon WhatsApp</span>
+      <input class="finput" id="iph" type="tel" placeholder="6XX XXX XXX" autocomplete="off">
+    </div>
+
+    <div class="frow">
+      <div class="fld"><span class="flabel">Model</span><input class="finput" id="imodel" type="text" placeholder="Golf, Clio..." autocomplete="off"></div>
+      <div class="fld"><span class="flabel">Color</span><input class="finput" id="icolor" type="text" placeholder="Blanc..." autocomplete="off"></div>
+    </div>
+
+    <div class="fld">
+      <span class="flabel">Estat inicial</span>
+      <div class="spicker" id="ssel">
+        <button class="spick sr" data-s="repair" onclick="setStatus('repair')">&#x1F527; Reparant</button>
+        <button class="spick" data-s="ready" onclick="setStatus('ready')">&#x2705; Llest</button>
+        <button class="spick" data-s="done" onclick="setStatus('done')">&#x1F4E6; Lliurat</button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <span class="flabel">Observacions</span>
+      <textarea class="finput" id="icl" placeholder="On ha deixat el cotxe, referencies, observacions..."></textarea>
+    </div>
+
+    <div class="fld">
+      <span class="flabel">Notes internes</span>
+      <textarea class="finput" id="inotes" placeholder="Feina a fer, pressupost, peces..."></textarea>
+    </div>
+
+    <div class="fld">
+      <span class="flabel">&#x1F4CD; Ubicacio GPS</span>
+      <div class="gpsinfo" id="gpsinfo"></div>
+      <button class="bbtn bbtn-gps" id="btngps" onclick="captureGPS('add',null)">&#x1F4CD; Agafar ubicacio GPS ara</button>
+    </div>
+
+    <button class="bbtn bbtn-submit" onclick="addVehicle()">&#x2795; REGISTRAR VEHICLE</button>
+    <button class="bbtn bbtn-clear" onclick="resetForm()">&#x1F5D1; Netejar formulari</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav hidden" id="bnav">
+  <button class="nbtn nbtn-active" id="nav-active" onclick="setTab('active')">
+    <span class="ico">&#x1F527;</span>En curs
+  </button>
+  <button class="nbtn nbtn-map" id="nav-map" onclick="setTab('map')">
+    <span class="ico">&#x1F5FA;</span>Mapa
+  </button>
+  <button class="nbtn nbtn-done" id="nav-done" onclick="setTab('done')">
+    <span class="ico">&#x2705;</span>Lliurats
+  </button>
+</div>
+
+<!-- FAB -->
+<button class="fab hidden" id="fab" onclick="setTab('add')">&#x2795; Afegir vehicle</button>
+
+<!-- MODAL VEHICLE -->
+<div class="mo" id="mo" onclick="if(event.target.id==='mo')closeModal()">
+  <div class="md">
+    <div class="mhandle"></div>
+    <div class="mplate" id="mplate">-</div>
+    <div class="mstrow" id="mstatus"></div>
+    <div id="mcontent"></div>
+    <button class="bbtn bbtn-close" onclick="closeModal()">Tancar</button>
+  </div>
+</div>
+
+<!-- MODAL BACKUP -->
+<div class="mo" id="mobk" onclick="if(event.target.id==='mobk')closeBackup()">
+  <div class="md">
+    <div class="mhandle"></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--gold);margin-bottom:14px">COPIA DE SEGURETAT</div>
+    <button class="bbtn bbtn-gps" onclick="exportData()">&#x1F4E4; Exportar totes les dades</button>
+    <div class="divider">restaurar</div>
+    <div class="camz" style="margin-bottom:14px">
+      <span class="camico" style="font-size:26px">&#x1F4C2;</span>
+      <span class="camlbl">Selecciona un fitxer de copia (.json)</span>
+      <input type="file" accept=".json" onchange="importData(event)">
+    </div>
+    <button class="bbtn bbtn-close" onclick="closeBackup()">Tancar</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lb" id="lb">
+  <button class="lbx" onclick="closeLB()">&#x2715;</button>
+  <button class="lbn" style="left:10px" id="lbprev" onclick="lbNav(-1)">&#x2039;</button>
+  <img id="lbimg" src="" alt="">
+  <button class="lbn" style="right:10px" id="lbnext" onclick="lbNav(1)">&#x203A;</button>
+</div>
+
+<div class="sdot" id="sdot"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+var SB_URL = 'https://wmqdqigzckacrsfhnxsw.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcWRxaWd6Y2thY3JzZmhueHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2NDY1NjcsImV4cCI6MjA5MzIyMjU2N30.FIp6O6dUOMhPWRQxr6Fr6zkYj4qaLZpAJnh4nGhcNtc';
+var OCR_URL = SB_URL + '/functions/v1/ocr-vehicle';
+var STORAGE_URL = SB_URL + '/storage/v1/object/public/vehicle-photos/';
+var sb = supabase.createClient(SB_URL, SB_KEY);
+
+// ── STATE ───────────────────────────────────────────────────────────────────
+var vehicles = [];
+var fPhotos = [], fGPS = null, fStatus = 'repair';
+var lbPhotos = [], lbIdx = 0;
+var mapReady = false, mapInst = null, mapMarkers = [];
+var curTab = 'add';
+var isDark = localStorage.getItem('theme') === 'dark';
+
+// ── THEME ───────────────────────────────────────────────────────────────────
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('theme-btn').textContent = isDark ? '\u2600\uFE0F' : '\uD83C\uDF19';
+  var meta = document.getElementById('theme-color-meta');
+  if (meta) meta.content = isDark ? '#1c1c1e' : '#f2f2f7';
+}
+function toggleTheme() {
+  isDark = !isDark;
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  applyTheme();
+  toast(isDark ? 'Mode fosc activat' : 'Mode clar activat', '');
+}
+applyTheme();
+
+// ── SYNC DOT ────────────────────────────────────────────────────────────────
+function syncStart() { document.getElementById('sdot').className = 'sdot sync'; }
+function syncOk() { document.getElementById('sdot').className = 'sdot'; }
+function syncErr() { document.getElementById('sdot').className = 'sdot err'; }
+
+// ── TOAST ───────────────────────────────────────────────────────────────────
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + (type||'') + ' show';
+  clearTimeout(t._t); t._t = setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+// ── UTILS ───────────────────────────────────────────────────────────────────
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function fmtDate(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear()
+    + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+// ── DB MAPPING ──────────────────────────────────────────────────────────────
+function dbToV(r) {
+  return { id:r.id, plate:r.plate, client:r.client, phone:r.phone||'',
+    model:r.model||'', color:r.color||'', status:r.status||'repair',
+    clientLocation:r.client_location||'', notes:r.notes||'',
+    parkedLat:r.parked_lat, parkedLng:r.parked_lng, parkedAddress:r.parked_address||'',
+    photos:r.photos||[], photoUrls:r.photo_urls||[],
+    deliveredAt:r.delivered_at, createdAt:r.created_at };
+}
+function vToDb(v) {
+  return { id:v.id, plate:v.plate, client:v.client, phone:v.phone||null,
+    model:v.model||null, color:v.color||null, status:v.status,
+    client_location:v.clientLocation||null, notes:v.notes||null,
+    parked_lat:v.parkedLat||null, parked_lng:v.parkedLng||null, parked_address:v.parkedAddress||null,
+    photos:v.photos||[], photo_urls:v.photoUrls||[], delivered_at:v.deliveredAt||null };
+}
+
+// ── SUPABASE CRUD ────────────────────────────────────────────────────────────
+async function loadVehicles() {
+  syncStart();
+  try {
+    var res = await sb.from('vehicles').select('*').order('created_at', {ascending:false});
+    if (res.error) throw res.error;
+    vehicles = (res.data||[]).map(dbToV);
+    syncOk();
+  } catch(e) {
+    syncErr();
+    try { vehicles = JSON.parse(localStorage.getItem('tv_bk')||'[]'); } catch(e2) { vehicles = []; }
+  }
+  cleanOld(); renderList();
+}
+
+async function saveV(v) {
+  syncStart();
+  try {
+    var res = await sb.from('vehicles').upsert(vToDb(v));
+    if (res.error) throw res.error;
+    syncOk(); localStorage.setItem('tv_bk', JSON.stringify(vehicles));
+  } catch(e) { syncErr(); toast('Error guardant. Comprova connexio.', 'warn'); }
+}
+
+async function delDB(id) {
+  syncStart();
+  try { var r = await sb.from('vehicles').delete().eq('id',id); if(r.error) throw r.error; syncOk(); }
+  catch(e) { syncErr(); }
+}
+
+// ── PHOTO UPLOAD TO STORAGE ──────────────────────────────────────────────────
+async function uploadPhotoToStorage(b64, vehicleId, idx) {
+  try {
+    var byteStr = atob(b64);
+    var arr = new Uint8Array(byteStr.length);
+    for (var i=0; i<byteStr.length; i++) arr[i] = byteStr.charCodeAt(i);
+    var blob = new Blob([arr], {type:'image/jpeg'});
+    var path = vehicleId + '/' + Date.now() + '_' + idx + '.jpg';
+    var res = await sb.storage.from('vehicle-photos').upload(path, blob, {contentType:'image/jpeg', upsert:true});
+    if (res.error) throw res.error;
+    return STORAGE_URL + path;
+  } catch(e) {
+    console.warn('Storage upload failed:', e);
+    return null;
+  }
+}
+
+// ── TABS ─────────────────────────────────────────────────────────────────────
+function setTab(name) {
+  curTab = name;
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-'+name).classList.add('active');
+  var bnav = document.getElementById('bnav');
+  var fab = document.getElementById('fab');
+  var sbar = document.getElementById('searchbar');
+  if (name === 'add') {
+    bnav.classList.add('hidden'); fab.classList.add('hidden'); sbar.style.display='none';
+  } else {
+    bnav.classList.remove('hidden'); fab.classList.remove('hidden'); sbar.style.display='block';
+    document.querySelectorAll('.nbtn').forEach(function(b) { b.classList.remove('sel'); });
+    var nb = document.getElementById('nav-'+name);
+    if (nb) nb.classList.add('sel');
+  }
+  if (name === 'map') { initMap(); setTimeout(renderMap, 300); }
+  else if (name !== 'add') renderList();
+}
+
+// ── RENDER LIST ──────────────────────────────────────────────────────────────
+function renderList() {
+  var q = (document.getElementById('search').value||'').toLowerCase().trim();
+  var active = vehicles.filter(function(v) { return v.status !== 'done'; });
+  var done = vehicles.filter(function(v) { return v.status === 'done'; });
+  function filt(a) {
+    return q ? a.filter(function(v){ return v.plate.toLowerCase().indexOf(q)>=0 || v.client.toLowerCase().indexOf(q)>=0; }) : a;
+  }
+  renderSection('list-active', filt(active));
+  renderSection('list-done', filt(done));
+  document.getElementById('badge').textContent = active.length;
+}
+
+function getPhotoSrc(v) {
+  // Prefer Storage URL, fallback to base64
+  if (v.photoUrls && v.photoUrls.length) return v.photoUrls[0];
+  if (v.photos && v.photos.length) {
+    var p = v.photos[0];
+    if (!p) return '';
+    return p.b64 ? (p.b64.indexOf('data:')===0 ? p.b64 : 'data:image/jpeg;base64,'+p.b64) : (p.url||'');
+  }
+  return '';
+}
+
+function getPhotoList(v) {
+  var list = [];
+  if (v.photoUrls && v.photoUrls.length) return v.photoUrls;
+  if (v.photos && v.photos.length) {
+    for (var i=0; i<v.photos.length; i++) {
+      var p = v.photos[i];
+      if (p.url) list.push(p.url);
+      else if (p.b64) list.push(p.b64.indexOf('data:')===0 ? p.b64 : 'data:image/jpeg;base64,'+p.b64);
+    }
+  }
+  return list;
+}
+
+function renderSection(elId, arr) {
+  var el = document.getElementById(elId);
+  if (!arr.length) {
+    el.innerHTML = '<div class="empty"><span class="empty-ico">&#x1F697;</span><div class="empty-txt">Cap vehicle aqui.<br>Prem <strong>+ Afegir vehicle</strong>.</div></div>';
+    return;
+  }
+  var isDone = elId === 'list-done';
+  var html = '';
+  for (var i=0; i<arr.length; i++) {
+    var v = arr[i];
+    var hl = v.parkedLat!=null;
+    var cls = v.status==='done' ? 'vdone' : (hl?'loc':'noloc');
+    var pc = v.status==='ready' ? 'pill-ready' : v.status==='done' ? 'pill-done' : 'pill-repair';
+    var plText = v.status==='ready' ? '&#x2705; Llest' : v.status==='done' ? '&#x1F4E6; Lliurat' : '&#x1F527; Reparant';
+    if (v.status==='done' && v.deliveredAt) plText += ' ' + fmtDate(v.deliveredAt);
+    var lp = hl ? '<div class="vloc">&#x1F4CD; '+(v.parkedAddress||v.parkedLat.toFixed(5)+', '+v.parkedLng.toFixed(5))+'</div>'
+      : (v.clientLocation ? '<div class="vloc">&#x1F4AC; '+v.clientLocation.slice(0,60)+(v.clientLocation.length>60?'...':'')+'</div>' : '');
+    var mc = (v.model||v.color) ? '<div class="vmodel">&#x1F697; '+[v.model,v.color].filter(Boolean).join(' &middot; ')+'</div>' : '';
+    var s0 = getPhotoSrc(v);
+    var th = s0 ? '<img class="vthumb" src="'+s0+'" onclick="event.stopPropagation();openModal(\''+v.id+'\')">' : '';
+    var wa = v.phone ? '<button class="vact vact-wa" onclick="event.stopPropagation();sendWA(\''+v.id+'\')">&#x1F4AC;</button>' : '';
+    var deliverBtn = !isDone ? '<button class="vact vact-deliver" onclick="event.stopPropagation();quickDeliver(\''+v.id+'\')">&#x2705; Lliurat</button>' : '';
+    html += '<div class="vcard '+cls+'" onclick="openModal(\''+v.id+'\')">'
+      +th+'<div class="vplate">'+v.plate+'</div>'
+      +'<div class="vclient">'+v.client+(v.phone?' &middot; '+v.phone:'')+'</div>'
+      +mc+lp
+      +'<div class="vrow"><span class="vpill '+pc+'">'+plText+'</span>'
+      +'<div class="vacts" onclick="event.stopPropagation()">'+deliverBtn+wa
+      +'<button class="vact vact-del" onclick="event.stopPropagation();delVehicle(\''+v.id+'\')">&#x1F5D1;</button>'
+      +'</div></div></div>';
+  }
+  el.innerHTML = html;
+}
+
+// ── CHECK EXISTING VEHICLE ───────────────────────────────────────────────────
+function checkExistingVehicle(plate) {
+  var hint = document.getElementById('existing-vehicle-hint');
+  if (!plate || plate.length < 6) { hint.style.display='none'; return; }
+  var existing = vehicles.find(function(v){ return v.plate === plate && v.status !== 'done'; });
+  if (existing) {
+    hint.style.display='block';
+    hint.innerHTML = '&#x26A0;&#xFE0F; Aquest vehicle ja esta registrat: <strong>'+existing.client+'</strong>. Toca per veure\'l.';
+    hint.onclick = function() { openModal(existing.id); };
+  } else { hint.style.display='none'; }
+}
+
+// ── QUICK DELIVER ────────────────────────────────────────────────────────────
+async function quickDeliver(id) {
+  var v = vehicles.find(function(x){return x.id===id;});
+  if (!v) return;
+  if (!confirm('Marcar '+v.plate+' com a LLIURAT?')) return;
+  v.status = 'done';
+  if (!v.deliveredAt) v.deliveredAt = new Date().toISOString();
+  await saveV(v);
+  // WhatsApp automatica si te telefon
+  if (v.phone) {
+    var sendNow = confirm('Enviar WhatsApp al client per avisar que pot passar a recollir el vehicle?');
+    if (sendNow) sendWA(id);
+  }
+  toast('Vehicle '+v.plate+' lliurat!', 'ok');
+  renderList();
+}
+
+// ── MAP ──────────────────────────────────────────────────────────────────────
+function initMap() {
+  if (mapReady) return; mapReady=true;
+  var css=document.createElement('link'); css.rel='stylesheet'; css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+  var s=document.createElement('script'); s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; s.onload=renderMap; document.head.appendChild(s);
+}
+
+function renderMap() {
+  if (typeof L==='undefined') return;
+  var wl = vehicles.filter(function(v){return v.status!=='done' && v.parkedLat;});
+  var ct = document.getElementById('map-ct');
+  var lg = document.getElementById('map-lg');
+  if (!wl.length) {
+    ct.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--mu);font-size:15px;flex-direction:column;gap:12px;padding:20px;text-align:center"><span style="font-size:48px">&#x1F5FA;</span>Cap vehicle amb GPS guardat.</div>';
+    lg.innerHTML=''; return;
+  }
+  if (!mapInst) {
+    mapInst=L.map('map-ct');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(mapInst);
+  }
+  mapMarkers.forEach(function(m){m.remove();}); mapMarkers=[];
+  var bounds=[];
+  for (var i=0; i<wl.length; i++) {
+    var v=wl[i];
+    var bgColor = v.status==='ready' ? '#1a8a3c' : '#0055cc';
+    var extra = v.model ? '<div style="font-size:11px;opacity:.85;margin-top:2px;font-weight:600">'+v.model+(v.color?' &middot; '+v.color:'')+'</div>' : '';
+    // Cercle + rectangle semitransparent
+    var iconHtml = '<div style="position:relative;display:inline-block">'
+      + '<div style="background:'+bgColor+';border-radius:50%;width:14px;height:14px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);position:absolute;bottom:-7px;left:50%;transform:translateX(-50%)"></div>'
+      + '<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:#fff;font-family:\'Courier New\',monospace;font-weight:900;font-size:15px;letter-spacing:3px;text-transform:uppercase;padding:7px 12px;border-radius:10px;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.3);text-align:center;min-width:80px">'+v.plate+extra+'</div>'
+      + '</div>';
+    var icon=L.divIcon({className:'',html:iconHtml,iconAnchor:[50,44]});
+    var popup='<div style="font-family:sans-serif;line-height:1.6;min-width:160px"><b style="font-size:16px;letter-spacing:2px">'+v.plate+'</b><br>'
+      +(v.model?'<span style="color:#555">'+v.model+(v.color?' &middot; '+v.color:'')+'</span><br>':'')
+      +'<span style="color:#666">'+v.client+'</span>'+(v.phone?'<br>'+v.phone:'')+'<br>'
+      +(v.parkedAddress?'<small>'+v.parkedAddress+'</small><br>':'')
+      +'<a href="https://www.google.com/maps?q='+v.parkedLat+','+v.parkedLng+'" target="_blank" style="color:#0055cc;font-weight:600">&#x1F5FA; Google Maps</a></div>';
+    var m=L.marker([v.parkedLat,v.parkedLng],{icon:icon}).addTo(mapInst).bindPopup(popup);
+    mapMarkers.push(m); bounds.push([v.parkedLat,v.parkedLng]);
+  }
+  mapInst.fitBounds(bounds,{padding:[40,40],maxZoom:17});
+  var lgHtml='<div class="stitle">'+wl.length+' vehicle'+(wl.length>1?'s':'')+' al mapa</div>';
+  for (var j=0; j<wl.length; j++) {
+    var vv=wl[j];
+    var stColor=vv.status==='ready'?'var(--green)':'var(--blue)';
+    var stLabel=vv.status==='ready'?'&#x2705; Llest':'&#x1F527; Reparant';
+    lgHtml+='<div class="mitem">'
+      +'<div onclick="openModal(\''+vv.id+'\')" style="flex:1;display:flex;align-items:center;gap:10px;min-width:0">'
+      +'<div class="mplate2" style="color:'+stColor+'">'+vv.plate+'</div>'
+      +'<div class="minfo">'+(vv.model||'')+(vv.color?' &middot; '+vv.color:'')+' &middot; '+vv.client+'</div>'
+      +'</div>'
+      +'<button class="mdeliver" onclick="quickDeliver(\''+vv.id+'\')">&#x2705; Lliurat</button>'
+      +'</div>';
+  }
+  lg.innerHTML=lgHtml;
+}
+
+// ── CONTACTS ─────────────────────────────────────────────────────────────────
+async function pickContact() {
+  if ('contacts' in navigator && 'ContactsManager' in window) {
+    try {
+      var contacts = await navigator.contacts.select(['name','tel'], {multiple:false});
+      if (!contacts || !contacts.length) return;
+      var c = contacts[0];
+      if (c.name && c.name[0]) document.getElementById('ic').value = c.name[0];
+      if (c.tel && c.tel[0]) {
+        var ph = c.tel[0].replace(/[\s\-\(\)\.]/g,'');
+        if (ph.startsWith('+34')) ph = ph.slice(3);
+        if (ph.startsWith('0034')) ph = ph.slice(4);
+        document.getElementById('iph').value = ph;
+      }
+      toast('Contacte importat!','ok'); return;
+    } catch(e) { console.warn('Contact Picker:', e); }
+  }
+  toast('Importa contactes: el teu navegador no ho suporta directament.\nUtilitza Safari iOS 14.5+ o Chrome Android.', 'warn');
+}
+
+// ── STATUS ───────────────────────────────────────────────────────────────────
+function setStatus(s) {
+  fStatus=s;
+  document.querySelectorAll('#ssel .spick').forEach(function(b){
+    var ds=b.getAttribute('data-s');
+    b.className='spick'+(ds===s?(s==='repair'?' sr':s==='ready'?' sg':' sd'):'');
+  });
+}
+
+// ── GPS ──────────────────────────────────────────────────────────────────────
+function captureGPS(ctx, vid) {
+  var btnId = ctx==='add' ? 'btngps' : 'btngpsm';
+  var btn = document.getElementById(btnId);
+  if (btn) btn.innerHTML = '<div class="spin"></div> Obtenint GPS...';
+  if (!navigator.geolocation) { toast('GPS no disponible','warn'); if(btn) btn.innerHTML='&#x1F4CD; Agafar GPS'; return; }
+  function tryPos(hi) {
+    navigator.geolocation.getCurrentPosition(async function(pos) {
+      var lat=pos.coords.latitude, lng=pos.coords.longitude, addr='';
+      try {
+        var r=await fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json&accept-language=ca');
+        var d=await r.json();
+        if(d.display_name) addr=d.display_name.split(',').slice(0,3).join(',').trim();
+      } catch(e) { addr=lat.toFixed(5)+', '+lng.toFixed(5); }
+      if (ctx==='add') {
+        fGPS={lat:lat,lng:lng,addr:addr};
+        var gi=document.getElementById('gpsinfo'); gi.textContent='&#x2705; '+(addr||lat.toFixed(5)+', '+lng.toFixed(5)); gi.style.display='block';
+        if(btn) btn.innerHTML='&#x1F504; Actualitzar GPS';
+        toast('GPS guardat!','ok');
+      } else {
+        var v=vehicles.find(function(x){return x.id===vid;}); if(!v) return;
+        v.parkedLat=lat; v.parkedLng=lng; v.parkedAddress=addr;
+        await saveV(v); toast('GPS guardat!','ok'); openModal(vid);
+      }
+    }, function(err) { if(hi){tryPos(false);return;} toast('Activa el GPS al mobil.','warn'); if(btn) btn.innerHTML='&#x1F4CD; Agafar GPS'; },
+    {enableHighAccuracy:hi, timeout:hi?12000:25000, maximumAge:hi?0:60000});
+  }
+  tryPos(true);
+}
+
+// ── PHOTOS ───────────────────────────────────────────────────────────────────
+async function handlePhotos(e) {
+  var files=Array.from(e.target.files); if(!files.length) return;
+  var isFirst=fPhotos.length===0;
+  toast('Processant fotos...');
+  for (var i=0; i<files.length; i++) {
+    var b64=await toB64(files[i]);
+    if(b64) fPhotos.push({key:uid(), b64:b64, isPlate:fPhotos.length===0});
+  }
+  renderGrid(); e.target.value='';
+  if (isFirst) {
+    captureGPS('add',null);
+    startOCR(fPhotos[0].b64); // No try/catch - volem veure errors
+  }
+}
+
+function toB64(file) {
+  return new Promise(function(res) {
+    var img=new Image(), url=URL.createObjectURL(file);
+    img.onload=function(){
+      var MAX=1200, w=img.width, h=img.height;
+      if(w>MAX||h>MAX){ if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;} }
+      var c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg',0.85).split(',')[1]);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);res('');};
+    img.src=url;
+  });
+}
+
+function renderGrid() {
+  var g=document.getElementById('pgrid'); if(!g) return;
+  if(!fPhotos.length){g.innerHTML='';return;}
+  var html='';
+  for(var i=0;i<fPhotos.length;i++){
+    var p=fPhotos[i];
+    var src=p.b64?(p.b64.indexOf('data:')===0?p.b64:'data:image/jpeg;base64,'+p.b64):'';
+    if(!src) continue;
+    html+='<div class="pitem"><img class="pthumb" src="'+src+'" onclick="openLB('+i+')">'
+      +(p.isPlate?'<div class="pbadge">Matr.</div>':'')
+      +'<button class="pdel" onclick="delPhoto('+i+')">&#x2715;</button></div>';
+  }
+  g.innerHTML=html;
+}
+
+function delPhoto(i) { fPhotos.splice(i,1); fPhotos.forEach(function(p,j){p.isPlate=j===0;}); renderGrid(); }
+
+// ── OCR via Edge Function ────────────────────────────────────────────────────
+async function startOCR(b64) {
+  var bar=document.getElementById('ocrbar'), msg=document.getElementById('ocrmsg');
+  bar.classList.add('on'); msg.textContent='Analitzant vehicle amb IA...';
+  try {
+    var res = await fetch(OCR_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY},
+      body:JSON.stringify({image_base64:b64, media_type:'image/jpeg'})
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    var result = await res.json();
+    var det=[];
+    if(result.matricula && result.matricula!=='null' && result.matricula.length>=4){
+      document.getElementById('ip').value=result.matricula.toUpperCase().replace(/[\s-]/g,'');
+      det.push('Matr: '+result.matricula);
+    }
+    if(result.model && result.model!=='null'){
+      document.getElementById('imodel').value=result.model;
+      det.push(result.model);
+    }
+    if(result.color && result.color!=='null'){
+      document.getElementById('icolor').value=result.color;
+      det.push(result.color);
+    }
+    if(det.length){ msg.textContent='Detectat: '+det.join(' - '); toast('Detectat: '+det.join(' - '),'ok'); setTimeout(function(){bar.classList.remove('on');},5000); }
+    else { msg.textContent='No detectat. Introdueix manualment.'; setTimeout(function(){bar.classList.remove('on');},3500); }
+  } catch(err) {
+    console.error('OCR error:', err);
+    msg.textContent='IA no disponible. Introdueix manualment.';
+    setTimeout(function(){bar.classList.remove('on');},3500);
+  }
+}
+
+// ── ADD VEHICLE ──────────────────────────────────────────────────────────────
+async function addVehicle() {
+  var plate=document.getElementById('ip').value.trim().toUpperCase();
+  var client=document.getElementById('ic').value.trim();
+  if(!plate){toast('Introdueix la matricula','warn');return;}
+  if(!client){toast('Introdueix el nom del client','warn');return;}
+  var vid = uid();
+  var v={id:vid, plate:plate, client:client,
+    phone:document.getElementById('iph').value.trim().replace(/\s/g,''),
+    model:document.getElementById('imodel').value.trim(),
+    color:document.getElementById('icolor').value.trim(),
+    clientLocation:document.getElementById('icl').value.trim(),
+    notes:document.getElementById('inotes').value.trim(),
+    status:fStatus,
+    photos:fPhotos.map(function(p){return{key:p.key, b64:p.b64, isPlate:p.isPlate};}),
+    photoUrls:[],
+    parkedLat:fGPS?fGPS.lat:null, parkedLng:fGPS?fGPS.lng:null, parkedAddress:fGPS?fGPS.addr:'',
+    deliveredAt:null, createdAt:new Date().toISOString()};
+  vehicles.unshift(v);
+  toast('Guardant vehicle...','');
+
+  // Upload photos to Storage in background
+  if (fPhotos.length) {
+    var prog = document.getElementById('upload-progress');
+    var bar2 = document.getElementById('upload-bar');
+    prog.classList.add('on');
+    var urls = [];
+    for (var i=0; i<fPhotos.length; i++) {
+      var url = await uploadPhotoToStorage(fPhotos[i].b64, vid, i);
+      if (url) urls.push(url);
+      bar2.style.width = Math.round((i+1)/fPhotos.length*100)+'%';
+    }
+    v.photoUrls = urls;
+    // Keep b64 as fallback but clear large data
+    if (urls.length === fPhotos.length) v.photos = [];
+    prog.classList.remove('on'); bar2.style.width='0%';
+  }
+
+  await saveV(v);
+  toast('Vehicle registrat!','ok');
+  resetForm(); setTab('active');
+}
+
+function resetForm() {
+  ['ip','ic','iph','icl','inotes','imodel','icolor'].forEach(function(id){document.getElementById(id).value='';});
+  fPhotos=[]; fGPS=null; fStatus='repair';
+  document.getElementById('pgrid').innerHTML='';
+  document.getElementById('ocrbar').classList.remove('on');
+  document.getElementById('existing-vehicle-hint').style.display='none';
+  var gi=document.getElementById('gpsinfo'); gi.style.display='none'; gi.textContent='';
+  document.getElementById('btngps').innerHTML='&#x1F4CD; Agafar ubicacio GPS ara';
+  setStatus('repair');
+}
+
+// ── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(id) {
+  var v=vehicles.find(function(x){return x.id===id;}); if(!v) return;
+  document.getElementById('mplate').textContent=v.plate;
+  var isDone = v.status === 'done';
+  var sC={repair:'var(--blue)',ready:'var(--green)',done:'var(--mu)'};
+  var sL={repair:'&#x1F527; Reparant',ready:'&#x2705; Llest',done:'&#x1F4E6; Lliurat'};
+  var stHtml='';
+  ['repair','ready','done'].forEach(function(s){
+    var a=v.status===s, sc=a?(s==='repair'?' sr':s==='ready'?' sg':' sd'):'';
+    var dis=isDone?' msp-disabled':'';
+    stHtml+='<button class="msp'+sc+dis+'" onclick="'+(isDone?'':'changeStatus(\''+id+'\',\''+s+'\')')+'">'+sL[s]+'</button>';
+  });
+  document.getElementById('mstatus').innerHTML=stHtml;
+
+  var mc=[v.model,v.color].filter(Boolean).join(' &middot; ');
+  var delivInfo = isDone && v.deliveredAt ? '<br><strong>Lliurat:</strong> &#x1F4C5; '+fmtDate(v.deliveredAt) : '';
+  var h='<div class="ibox"><strong>Client:</strong> '+v.client
+    +(v.phone?'<br><strong>Tel:</strong> '+v.phone:'')
+    +(mc?'<br><strong>Vehicle:</strong> '+mc:'')
+    +delivInfo+'</div>';
+
+  // Photos from Storage or b64
+  var photoList = getPhotoList(v);
+  if (photoList.length) {
+    var imgs='';
+    for(var j=0;j<photoList.length;j++) imgs+='<img src="'+photoList[j]+'" '+(j===0?'class="pl"':'')+' onclick="openLBM('+j+',\''+id+'\')">';
+    h+='<div class="pscroll">'+imgs+'</div>';
+  }
+
+  if(v.clientLocation) h+='<div class="ibox">&#x1F5FA; <strong>Observacions:</strong><br>'+v.clientLocation+'</div>';
+  if(v.notes) h+='<div class="ibox">&#x1F4DD; <strong>Notes:</strong><br>'+v.notes+'</div>';
+
+  if(v.parkedLat){
+    var mu='https://www.google.com/maps?q='+v.parkedLat+','+v.parkedLng;
+    h+='<div class="ibox green">&#x1F4CD; <strong style="color:var(--green)">Aparcat a:</strong><br>'
+      +(v.parkedAddress||v.parkedLat.toFixed(6)+', '+v.parkedLng.toFixed(6))
+      +'<br><a href="'+mu+'" target="_blank">&#x1F5FA; Veure a Google Maps</a></div>';
+  }
+
+  if (!isDone) {
+    h+='<div class="divider">accio rapida</div>';
+    h+='<button class="bbtn bbtn-deliver" onclick="quickDeliver(\''+id+'\');closeModal()">&#x2705; Marcar com a LLIURAT</button>';
+  }
+
+  h+='<div class="divider">comunicacio</div>';
+  if(v.phone) {
+    h+='<button class="bbtn bbtn-wa" onclick="sendWA(\''+id+'\')">&#x1F4AC; Avisar: ja pot venir a recollir</button>';
+    h+='<button class="bbtn bbtn-wa2" onclick="sendWALocation(\''+id+'\')">&#x1F4CD; Enviar ubicacio per WhatsApp</button>';
+  }
+  if(v.parkedLat||v.clientLocation) h+='<button class="bbtn bbtn-copy" onclick="copyLoc(\''+id+'\')">&#x1F4CB; Copiar adreca</button>';
+
+  h+='<div class="divider">ubicacio</div>';
+  h+='<button class="bbtn bbtn-gps" id="btngpsm" onclick="captureGPS(\'modal\',\''+id+'\')">'+(v.parkedLat?'&#x1F504; Actualitzar GPS':'&#x1F4CD; Guardar ubicacio GPS')+'</button>';
+
+  h+='<div class="divider">afegir fotos</div>';
+  h+='<div class="camz"><span class="camico" style="font-size:24px">&#x1F4F7;</span><span class="camlbl">Afegir mes fotos</span><input type="file" accept="image/*" capture="environment" onchange="addPhotosM(event,\''+id+'\')" multiple></div>';
+
+  document.getElementById('mcontent').innerHTML=h;
+  document.getElementById('mo').classList.add('open');
+}
+
+async function changeStatus(id,s) {
+  var v=vehicles.find(function(x){return x.id===id;}); if(!v) return;
+  if (v.status==='done') { toast('Un vehicle lliurat no es pot canviar d\'estat.','warn'); return; }
+  v.status=s;
+  if(s==='done' && !v.deliveredAt) v.deliveredAt=new Date().toISOString();
+  await saveV(v);
+  // WhatsApp auto quan es marca com a Llest
+  if (s==='ready' && v.phone) {
+    var send=confirm('Enviar WhatsApp a '+v.client+' per avisar que el vehicle esta llest?');
+    if(send) sendWA(id);
+  }
+  toast(s==='ready'?'Llest! WhatsApp enviat?':s==='done'?'Lliurat!':'En reparacio','ok');
+  openModal(id); renderList();
+}
+
+async function addPhotosM(e,id) {
+  var v=vehicles.find(function(x){return x.id===id;}); if(!v) return;
+  if(!v.photos) v.photos=[];
+  if(!v.photoUrls) v.photoUrls=[];
+  toast('Processant fotos...');
+  for(var i=0;i<e.target.files.length;i++){
+    var b64=await toB64(e.target.files[i]);
+    if(!b64) continue;
+    var url=await uploadPhotoToStorage(b64, id, v.photos.length+v.photoUrls.length);
+    if(url) v.photoUrls.push(url);
+    else v.photos.push({key:uid(),b64:b64,isPlate:false});
+  }
+  await saveV(v); toast('Fotos afegides!','ok'); openModal(id);
+}
+
+function closeModal(){document.getElementById('mo').classList.remove('open');}
+
+// ── WHATSAPP ─────────────────────────────────────────────────────────────────
+// Missatge 1: Avisa que pot venir (sense ubicacio)
+function sendWA(id) {
+  var v=vehicles.find(function(x){return x.id===id;}); if(!v||!v.phone){toast('No hi ha telefon','warn');return;}
+  var msg='Hola '+v.client+'! &#x1F44B;\nEl seu vehicle *'+v.plate+'* ja esta llest per recollir.\n\nPot passar pel taller quan vulgui en horari d\'atencio.\n\nMoltes gracies per confiar en nosaltres!\nFins la propera!\nTALLER ARGENTONA';
+  var ph=v.phone.replace(/[^0-9+]/g,''); if(ph.indexOf('+')<0) ph='+34'+ph;
+  window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(msg),'_blank');
+  closeModal();
+}
+
+// Missatge 2: Amb ubicacio
+function sendWALocation(id) {
+  var v=vehicles.find(function(x){return x.id===id;}); if(!v||!v.phone){toast('No hi ha telefon','warn');return;}
+  var msg='Hola '+v.client+'! &#x1F44B;\nEl seu vehicle *'+v.plate+'* ja esta llest.';
+  if(v.parkedLat){
+    var u='https://www.google.com/maps?q='+v.parkedLat+','+v.parkedLng;
+    msg+=v.parkedAddress?'\n\n&#x1F4CD; *Aparcat a:*\n'+v.parkedAddress+'\n\n&#x1F5FA; '+u:'\n\n&#x1F4CD; *Ubicacio GPS:*\n'+u;
+  } else if(v.clientLocation) msg+='\n\n&#x1F4CD; *Aparcat a:* '+v.clientLocation;
+  msg+='\n\nMoltes gracies per confiar en nosaltres!\nFins la propera!\nTALLER ARGENTONA';
+  var ph=v.phone.replace(/[^0-9+]/g,''); if(ph.indexOf('+')<0) ph='+34'+ph;
+  window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(msg),'_blank');
+  closeModal();
+}
+
+function copyLoc(id) {
+  var v=vehicles.find(function(x){return x.id===id;}); if(!v) return;
+  var txt=v.parkedLat?(v.parkedAddress||v.parkedLat.toFixed(5)+', '+v.parkedLng.toFixed(5)):v.clientLocation||'';
+  if(!txt){toast('No hi ha adreca guardada','warn');return;}
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(function(){toast('Adreca copiada!','ok');});
+}
+
+// ── LIGHTBOX ─────────────────────────────────────────────────────────────────
+function openLB(idx) {
+  lbPhotos=fPhotos.map(function(p){var b=p.b64;return b?(b.indexOf('data:')===0?b:'data:image/jpeg;base64,'+b):'';}).filter(Boolean);
+  lbIdx=Math.min(idx,lbPhotos.length-1); if(lbPhotos.length) showLB();
+}
+function openLBM(idx,vid) {
+  var v=vehicles.find(function(x){return x.id===vid;}); if(!v) return;
+  lbPhotos=getPhotoList(v).filter(Boolean);
+  lbIdx=Math.min(idx,lbPhotos.length-1); showLB();
+}
+function showLB() { document.getElementById('lbimg').src=lbPhotos[lbIdx]; document.getElementById('lbprev').style.display=lbPhotos.length>1?'flex':'none'; document.getElementById('lbnext').style.display=lbPhotos.length>1?'flex':'none'; document.getElementById('lb').classList.add('open'); }
+function closeLB() { document.getElementById('lb').classList.remove('open'); }
+function lbNav(d) { lbIdx=(lbIdx+d+lbPhotos.length)%lbPhotos.length; showLB(); }
+document.getElementById('lb').addEventListener('click',function(e){if(e.target.id==='lb'||e.target.id==='lbimg')closeLB();});
+
+// ── DELETE ───────────────────────────────────────────────────────────────────
+async function delVehicle(id) {
+  if(!confirm('Eliminar aquest vehicle?')) return;
+  vehicles=vehicles.filter(function(v){return v.id!==id;});
+  await delDB(id); renderList(); toast('Vehicle eliminat',''); closeModal();
+}
+
+// ── CLEAN OLD 10 DIES ────────────────────────────────────────────────────────
+function cleanOld() {
+  var TEN=10*24*60*60*1000, now=Date.now();
+  vehicles=vehicles.filter(function(v){
+    if(v.status!=='done') return true;
+    var t=v.deliveredAt?new Date(v.deliveredAt).getTime():new Date(v.createdAt).getTime();
+    return(now-t)<TEN;
+  });
+}
+
+// ── BACKUP ───────────────────────────────────────────────────────────────────
+function showBackup(){document.getElementById('mobk').classList.add('open');}
+function closeBackup(){document.getElementById('mobk').classList.remove('open');}
+function exportData(){
+  var d=new Date();
+  var blob=new Blob([JSON.stringify({v:vehicles,exported:d.toISOString()})],{type:'application/json'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='taller-backup-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';
+  a.click(); URL.revokeObjectURL(a.href); toast('Dades exportades!','ok');
+}
+function importData(e){
+  var file=e.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=async function(evt){
+    try{
+      var data=JSON.parse(evt.target.result);
+      if(!data.v||!Array.isArray(data.v)) throw new Error('Format incorrecte');
+      if(!confirm('Importar '+data.v.length+' vehicles?')) return;
+      for(var i=0;i<data.v.length;i++) await saveV(data.v[i]);
+      await loadVehicles(); closeBackup(); toast(data.v.length+' vehicles importats!','ok');
+    }catch(err){ toast('Fitxer no valid','warn'); }
+  };
+  reader.readAsText(file); e.target.value='';
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadVehicles();
+setTab('active'); // Comencem a la llista, no al formulari
+</script>
+</body>
+</html>
