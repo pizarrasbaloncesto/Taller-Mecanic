@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Taller Argentona</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#f0f0f0;
+  --s1:#ffffff;
+  --s2:#e8e8e8;
+  --s3:#d8d8d8;
+  --bd:#cccccc;
+  --tx:#1a1a1a;
+  --mu:#666666;
+  --mu2:#999999;
+  --green:#1a8a3c;
+  --green-bg:#e8f5ec;
+  --blue:#0055cc;
+  --blue-bg:#e6eeff;
+  --orange:#b85c00;
+  --orange-bg:#fff0e0;
+  --red:#cc2222;
+  --red-bg:#ffecec;
+  --purple:#6600cc;
+  --purple-bg:#f0e6ff;
+  --gold:#b07800;
+  --gold-bg:#fff8e0;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;max-width:430px;margin:0 auto;display:flex;flex-direction:column;height:100dvh}
+
+/* HEADER */
+.hdr{padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--s1);border-bottom:1.5px solid var(--bd)}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--gold)}
+.logo b{color:var(--tx);font-weight:400}
+.hright{display:flex;align-items:center;gap:8px}
+.hbadge{background:var(--gold);color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;min-width:32px;text-align:center}
+.hbkp{background:transparent;border:1.5px solid var(--bd);border-radius:10px;color:var(--mu);font-size:15px;padding:5px 10px;cursor:pointer}
+.hbkp:active{background:var(--s2)}
+
+/* BOTTOM NAV - only shown outside "add" screen */
+.bnav{flex-shrink:0;background:var(--s1);border-top:1.5px solid var(--bd);padding:10px 16px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.bnav.hidden{display:none}
+.nbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 6px;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:opacity .15s;width:100%;line-height:1.2}
+.nbtn:active{opacity:.7}
+.nbtn-active{background:var(--blue-bg);color:var(--blue)}
+.nbtn-map{background:var(--purple-bg);color:var(--purple)}
+.nbtn-done{background:var(--s2);color:var(--mu)}
+.nbtn .ico{font-size:22px}
+.nbtn.sel{box-shadow:0 0 0 2px currentColor}
+
+/* FAB - botó afegir sempre visible */
+.fab{position:fixed;bottom:96px;right:18px;z-index:50;background:var(--green);color:#fff;border:none;border-radius:20px;padding:16px 22px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.2);display:flex;align-items:center;gap:8px;transition:transform .15s}
+.fab:active{transform:scale(.95)}
+.fab.hidden{display:none}
+
+/* SCREENS */
+.screen{display:none;flex:1;overflow-y:auto;padding:16px 18px 20px;-webkit-overflow-scrolling:touch}
+.screen.active{display:block}
+
+/* ADD SCREEN special: fills all space */
+#screen-add{padding-bottom:40px}
+
+/* BACK BUTTON (add screen) */
+.back-bar{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-top:2px}
+.back-btn{background:var(--s2);border:none;border-radius:10px;padding:8px 14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:var(--mu);cursor:pointer;display:flex;align-items:center;gap:6px}
+.back-btn:active{background:var(--s3)}
+
+/* VEHICLE CARD */
+.vcard{background:var(--s1);border-radius:var(--r);padding:16px;margin-bottom:12px;cursor:pointer;transition:transform .12s;border:1.5px solid var(--bd);border-left:5px solid var(--bd);position:relative}
+.vcard:active{transform:scale(.98)}
+.vcard.loc{border-left-color:var(--green)}
+.vcard.noloc{border-left-color:var(--orange)}
+.vcard.vdone{border-left-color:var(--mu2);opacity:.7}
+.vplate{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:var(--tx);margin-bottom:2px}
+.vclient{font-size:15px;color:var(--mu);margin-bottom:8px}
+.vmodel{font-size:13px;color:var(--mu);margin-bottom:6px}
+.vloc{font-size:13px;color:var(--mu);background:var(--s2);padding:7px 10px;border-radius:10px;margin-bottom:8px;line-height:1.4}
+.vnotes{font-size:13px;color:var(--mu2);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
+.vrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vpill{font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.pill-repair{background:var(--blue-bg);color:var(--blue)}
+.pill-ready{background:var(--green-bg);color:var(--green)}
+.pill-done{background:var(--s2);color:var(--mu)}
+.vacts{display:flex;gap:6px;flex-shrink:0}
+.vact{height:38px;border-radius:10px;border:1.5px solid var(--bd);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;padding:0 12px;white-space:nowrap}
+.vact:active{opacity:.7}
+.vact-deliver{background:var(--green-bg);color:var(--green);border-color:rgba(26,138,60,.3)}
+.vact-wa{background:var(--green-bg);color:var(--green);border-color:rgba(26,138,60,.3);padding:0 10px}
+.vact-del{background:var(--red-bg);color:var(--red);border-color:rgba(204,34,34,.2);padding:0 10px}
+.vthumb{width:52px;height:52px;object-fit:cover;border-radius:10px;float:right;margin-left:12px;border:1.5px solid var(--bd)}
+
+/* FORM */
+.ftitle{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;color:var(--gold);margin-bottom:18px}
+.fld{margin-bottom:14px}
+.flabel{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mu);margin-bottom:7px;display:block}
+.flnote{font-size:10px;color:var(--orange);font-weight:500;text-transform:none;letter-spacing:0;margin-left:4px}
+.finput{width:100%;background:var(--s1);border:1.5px solid var(--bd);border-radius:12px;padding:13px 15px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:16px;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none}
+.finput:focus{border-color:var(--gold);background:#fffef8}
+#ip{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:5px;text-transform:uppercase}
+textarea.finput{resize:none;min-height:76px;line-height:1.5}
+.frow{display:flex;gap:10px}
+.frow .fld{flex:1}
+.crow{display:flex;gap:8px}
+.crow .finput{flex:1}
+.cpick{background:var(--s1);border:1.5px solid var(--bd);border-radius:12px;padding:13px 15px;font-size:20px;cursor:pointer;line-height:1;flex-shrink:0}
+.cpick:active{background:var(--s2)}
+
+/* STATUS PICKER */
+.spicker{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.spick{padding:13px 6px;border-radius:12px;border:1.5px solid var(--bd);background:var(--s2);color:var(--mu);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:center}
+.spick:active{opacity:.75}
+.spick.sr{background:var(--blue-bg);border-color:var(--blue);color:var(--blue)}
+.spick.sg{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.spick.sd{background:var(--s2);border-color:var(--mu2);color:var(--mu)}
+
+/* CAMERA ZONE */
+.camz{border:2px dashed var(--bd);border-radius:14px;padding:20px;text-align:center;cursor:pointer;position:relative;overflow:hidden;background:var(--s1);transition:border-color .2s}
+.camz:active{border-color:var(--gold)}
+.camz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;padding:0;border:none;background:transparent}
+.camico{font-size:30px;display:block;margin-bottom:6px;pointer-events:none}
+.camlbl{font-size:14px;color:var(--mu);pointer-events:none;line-height:1.5}
+
+/* PHOTO GRID */
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.pitem{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;border:1.5px solid var(--bd)}
+.pthumb{width:100%;height:100%;object-fit:cover;display:block}
+.pdel{position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(0,0,0,.6);border-radius:50%;border:none;color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700}
+.pbadge{position:absolute;bottom:4px;left:4px;background:var(--gold);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;text-transform:uppercase}
+
+/* OCR BAR */
+.ocrbar{display:none;align-items:center;gap:10px;padding:12px 14px;background:var(--gold-bg);border:1.5px solid rgba(176,120,0,.3);border-radius:12px;margin-top:10px;font-size:14px;color:var(--gold);font-weight:600}
+.ocrbar.on{display:flex}
+
+/* GPS INFO */
+.gpsinfo{font-size:14px;color:var(--green);padding:10px 14px;background:var(--green-bg);border:1.5px solid rgba(26,138,60,.3);border-radius:12px;display:none;margin-bottom:10px}
+
+/* BUTTONS */
+.bbtn{width:100%;padding:16px;border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;transition:opacity .15s}
+.bbtn:active{opacity:.75}
+.bbtn:last-child{margin-bottom:0}
+.bbtn-submit{background:var(--green);color:#fff;font-size:18px;padding:18px}
+.bbtn-clear{background:var(--s2);color:var(--mu);border:1.5px solid var(--bd)}
+.bbtn-gps{background:var(--green-bg);color:var(--green);border:1.5px solid rgba(26,138,60,.3)}
+.bbtn-wa{background:var(--green-bg);color:#1a7a30;border:1.5px solid rgba(26,138,60,.3)}
+.bbtn-copy{background:var(--blue-bg);color:var(--blue);border:1.5px solid rgba(0,85,204,.25)}
+.bbtn-deliver{background:var(--green-bg);color:var(--green);border:1.5px solid rgba(26,138,60,.3);font-size:17px;padding:17px}
+.bbtn-close{background:var(--s2);color:var(--mu);border:1.5px solid var(--bd)}
+
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s}
+.mo.open{opacity:1;pointer-events:all}
+.md{width:100%;max-width:430px;margin:0 auto;background:var(--s1);border-radius:22px 22px 0 0;padding:18px 18px 40px;transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.3,1);border-top:1.5px solid var(--bd);max-height:93dvh;overflow-y:auto}
+.mo.open .md{transform:translateY(0)}
+.mhandle{width:44px;height:5px;background:var(--bd);border-radius:3px;margin:0 auto 18px}
+.mplate{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:6px;margin-bottom:6px;color:var(--tx)}
+.ibox{background:var(--s2);border-radius:12px;padding:13px;margin-bottom:10px;font-size:15px;color:var(--mu);line-height:1.65}
+.ibox strong{color:var(--tx);font-weight:600}
+.ibox a{color:var(--blue);text-decoration:none;font-size:14px}
+.ibox.green{background:var(--green-bg);border-left:4px solid var(--green)}
+.divider{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--mu2);margin:16px 0 12px;display:flex;align-items:center;gap:8px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--bd)}
+
+/* PHOTO SCROLL */
+.pscroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px}
+.pscroll::-webkit-scrollbar{display:none}
+.pscroll img{width:110px;height:80px;object-fit:cover;border-radius:10px;flex-shrink:0;border:1.5px solid var(--bd);cursor:pointer}
+.pscroll img.pl{border-color:var(--gold);border-width:2px}
+
+/* MODAL STATUS ROW */
+.mstrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.msp{padding:13px 4px;border-radius:12px;border:1.5px solid var(--bd);background:var(--s2);color:var(--mu);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;text-align:center}
+.msp:active{opacity:.75}
+.msp.sr{background:var(--blue-bg);border-color:var(--blue);color:var(--blue)}
+.msp.sg{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.msp.sd{background:var(--s2);border-color:var(--mu2);color:var(--mu)}
+
+/* LIGHTBOX */
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.lb.open{opacity:1;pointer-events:all}
+.lb img{max-width:100%;max-height:100dvh;object-fit:contain}
+.lbx{position:absolute;top:20px;right:20px;width:40px;height:40px;background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.lbn{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;font-size:26px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* TOAST */
+.toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--tx);color:var(--bg);padding:13px 22px;border-radius:14px;font-size:15px;font-weight:700;z-index:300;transition:transform .3s cubic-bezier(.2,.8,.3,1);box-shadow:0 6px 30px rgba(0,0,0,.25);max-width:90vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--green);color:#fff}
+.toast.warn{background:var(--orange);color:#fff}
+
+/* SPIN */
+.spin{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(0,0,0,.15);border-top-color:currentColor;border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* SYNC DOT */
+.sdot{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:8px;height:8px;border-radius:50%;background:var(--green);z-index:40}
+.sdot.sync{background:var(--orange);animation:pulse 1s infinite}
+.sdot.err{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* EMPTY */
+.empty{text-align:center;padding:50px 20px;color:var(--mu2)}
+.empty-ico{font-size:52px;margin-bottom:12px;display:block}
+.empty-txt{font-size:15px;line-height:1.7;color:var(--mu)}
+
+/* MAP */
+#map-ct{border-radius:14px;overflow:hidden;border:1.5px solid var(--bd);height:calc(100dvh - 190px);background:var(--s2)}
+#map-lg{margin-top:12px}
+.mitem{display:flex;align-items:center;gap:10px;padding:14px;background:var(--s1);border-radius:14px;margin-bottom:8px;cursor:pointer;border:1.5px solid var(--bd)}
+.mitem:active{background:var(--s2)}
+.mplate2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--tx)}
+.minfo{font-size:13px;color:var(--mu);flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.mdeliver{background:var(--green-bg);color:var(--green);border:1.5px solid rgba(26,138,60,.3);border-radius:10px;padding:8px 12px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap}
+.mdeliver:active{opacity:.75}
+
+/* SEARCH */
+.sbar{flex-shrink:0;padding:10px 18px 0;background:var(--bg)}
+.sinput{width:100%;background:var(--s1);border:1.5px solid var(--bd);border-radius:12px;padding:12px 14px 12px 40px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;-webkit-appearance:none}
+.sinput:focus{border-color:var(--gold)}
+.swrap{position:relative}
+.sico{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">TALLER <b>ARGENTONA</b></div>
+  <div class="hright">
+    <button class="hbkp" onclick="showBackup()">&#x1F4BE;</button>
+    <div class="hbadge" id="badge">0</div>
+  </div>
+</div>
+
+<div class="sbar" id="searchbar">
+  <div class="swrap">
+    <span class="sico">&#x1F50D;</span>
+    <input class="sinput" id="search" placeholder="Cerca matricula o client..." oninput="renderList()" autocomplete="off" autocorrect="off" spellcheck="false">
+  </div>
+</div>
+
+<!-- SCREENS -->
+<div class="screen" id="screen-active"><div id="list-active"></div></div>
+
+<div class="screen" id="screen-map">
+  <div id="map-ct"></div>
+  <div id="map-lg"></div>
+</div>
+
+<div class="screen" id="screen-done"><div id="list-done"></div></div>
+
+<div class="screen active" id="screen-add">
+  <div class="back-bar">
+    <button class="back-btn" onclick="setTab('active')">&#x2190; Tornar</button>
+    <div class="ftitle" style="margin-bottom:0">NOU VEHICLE</div>
+  </div>
+
+  <div class="fld">
+    <span class="flabel">&#x1F4F8; Fotos<span class="flnote">1a foto: detecta matricula, model i color + GPS automatic</span></span>
+    <div class="camz">
+      <span class="camico">&#x1F4F7;</span>
+      <span class="camlbl">Toca per fer una foto o triar de la galeria<br><small style="color:var(--mu2)">Pots seleccionar diverses alhora</small></span>
+      <input type="file" accept="image/*" capture="environment" id="photo-input" onchange="handlePhotos(event)" multiple>
+    </div>
+    <div class="ocrbar" id="ocrbar"><div class="spin"></div><span id="ocrmsg">Analitzant vehicle...</span></div>
+    <div class="pgrid" id="pgrid"></div>
+  </div>
+
+  <div class="fld">
+    <span class="flabel">Matricula</span>
+    <input class="finput" type="text" id="ip" placeholder="0000ABC" maxlength="12" autocomplete="off" autocorrect="off" spellcheck="false" oninput="this.value=this.value.toUpperCase()">
+  </div>
+
+  <div class="fld">
+    <span class="flabel">Client</span>
+    <div class="crow">
+      <input class="finput" id="ic" type="text" placeholder="Nom del client..." autocomplete="off">
+      <button class="cpick" onclick="pickContact()">&#x1F464;</button>
+    </div>
+  </div>
+
+  <div class="fld">
+    <span class="flabel">Telefon WhatsApp</span>
+    <input class="finput" id="iph" type="tel" placeholder="6XX XXX XXX" autocomplete="off">
+  </div>
+
+  <div class="frow">
+    <div class="fld"><span class="flabel">Model</span><input class="finput" id="imodel" type="text" placeholder="Golf, Clio..." autocomplete="off"></div>
+    <div class="fld"><span class="flabel">Color</span><input class="finput" id="icolor" type="text" placeholder="Blanc..." autocomplete="off"></div>
+  </div>
+
+  <div class="fld">
+    <span class="flabel">Estat inicial</span>
+    <div class="spicker" id="ssel">
+      <button class="spick sr" data-s="repair" onclick="setStatus('repair')">&#x1F527; Reparant</button>
+      <button class="spick" data-s="ready" onclick="setStatus('ready')">&#x2705; Llest</button>
+      <button class="spick" data-s="done" onclick="setStatus('done')">&#x1F4E6; Lliurat</button>
+    </div>
+  </div>
+
+  <div class="fld">
+    <span class="flabel">OBSERVACIONS</span>
+    <textarea class="finput" id="icl" placeholder="On ha deixat el cotxe, referencies, observacions..."></textarea>
+  </div>
+
+  <div class="fld">
+    <span class="flabel">Notes internes</span>
+    <textarea class="finput" id="inotes" placeholder="Feina a fer, pressupost, peces..."></textarea>
+  </div>
+
+  <div class="fld">
+    <span class="flabel">&#x1F4CD; Ubicacio GPS</span>
+    <div class="gpsinfo" id="gpsinfo"></div>
+    <button class="bbtn bbtn-gps" id="btngps" onclick="captureGPS('add',null)">&#x1F4CD; Agafar ubicacio GPS ara</button>
+  </div>
+
+  <button class="bbtn bbtn-submit" onclick="addVehicle()">&#x2795; REGISTRAR VEHICLE</button>
+  <button class="bbtn bbtn-clear" onclick="resetForm()">&#x1F5D1; Netejar formulari</button>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav hidden" id="bnav">
+  <button class="nbtn nbtn-active" id="nav-active" onclick="setTab('active')">
+    <span class="ico">&#x1F527;</span>En curs
+  </button>
+  <button class="nbtn nbtn-map" id="nav-map" onclick="setTab('map')">
+    <span class="ico">&#x1F5FA;</span>Mapa
+  </button>
+  <button class="nbtn nbtn-done" id="nav-done" onclick="setTab('done')">
+    <span class="ico">&#x2705;</span>Lliurats
+  </button>
+</div>
+
+<!-- FAB -->
+<button class="fab hidden" id="fab" onclick="setTab('add')">&#x2795; Afegir vehicle</button>
+
+<!-- MODAL VEHICLE -->
+<div class="mo" id="mo" onclick="if(event.target.id==='mo')closeModal()">
+  <div class="md">
+    <div class="mhandle"></div>
+    <div class="mplate" id="mplate">-</div>
+    <div class="mstrow" id="mstatus"></div>
+    <div id="mcontent"></div>
+    <button class="bbtn bbtn-close" onclick="closeModal()">Tancar</button>
+  </div>
+</div>
+
+<!-- MODAL BACKUP -->
+<div class="mo" id="mobk" onclick="if(event.target.id==='mobk')closeBackup()">
+  <div class="md">
+    <div class="mhandle"></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:var(--gold);margin-bottom:14px">COPIA DE SEGURETAT</div>
+    <button class="bbtn bbtn-gps" onclick="exportData()">&#x1F4E4; Exportar totes les dades</button>
+    <div class="divider">restaurar</div>
+    <div class="camz" style="margin-bottom:14px">
+      <span class="camico" style="font-size:26px">&#x1F4C2;</span>
+      <span class="camlbl">Selecciona un fitxer de copia (.json)</span>
+      <input type="file" accept=".json" onchange="importData(event)">
+    </div>
+    <button class="bbtn bbtn-close" onclick="closeBackup()">Tancar</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lb" id="lb">
+  <button class="lbx" onclick="closeLB()">&#x2715;</button>
+  <button class="lbn" style="left:10px" id="lbprev" onclick="lbNav(-1)">&#x2039;</button>
+  <img id="lbimg" src="" alt="">
+  <button class="lbn" style="right:10px" id="lbnext" onclick="lbNav(1)">&#x203A;</button>
+</div>
+
+<div class="sdot" id="sdot"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+var SB_URL = 'https://wmqdqigzckacrsfhnxsw.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtcWRxaWd6Y2thY3JzZmhueHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2NDY1NjcsImV4cCI6MjA5MzIyMjU2N30.FIp6O6dUOMhPWRQxr6Fr6zkYj4qaLZpAJnh4nGhcNtc';
+var sb = supabase.createClient(SB_URL, SB_KEY);
+
+var vehicles = [];
+var fPhotos = [], fGPS = null, fStatus = 'repair';
+var lbPhotos = [], lbIdx = 0;
+var mapReady = false, mapInst = null, mapMarkers = [];
+var curTab = 'add';
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function syncStart() { document.getElementById('sdot').className = 'sdot sync'; }
+function syncOk() { document.getElementById('sdot').className = 'sdot'; }
+function syncErr() { document.getElementById('sdot').className = 'sdot err'; }
+
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + (type||'') + ' show';
+  clearTimeout(t._t); t._t = setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+// DB
+function dbToV(r) {
+  return { id:r.id, plate:r.plate, client:r.client, phone:r.phone||'',
+    model:r.model||'', color:r.color||'', status:r.status||'repair',
+    clientLocation:r.client_location||'', notes:r.notes||'',
+    parkedLat:r.parked_lat, parkedLng:r.parked_lng, parkedAddress:r.parked_address||'',
+    photos:r.photos||[], deliveredAt:r.delivered_at, createdAt:r.created_at };
+}
+function vToDb(v) {
+  return { id:v.id, plate:v.plate, client:v.client, phone:v.phone||null,
+    model:v.model||null, color:v.color||null, status:v.status,
+    client_location:v.clientLocation||null, notes:v.notes||null,
+    parked_lat:v.parkedLat||null, parked_lng:v.parkedLng||null, parked_address:v.parkedAddress||null,
+    photos:v.photos||[], delivered_at:v.deliveredAt||null };
+}
+
+async function loadVehicles() {
+  syncStart();
+  try {
+    var res = await sb.from('vehicles').select('*').order('created_at', {ascending:false});
+    if (res.error) throw res.error;
+    vehicles = (res.data||[]).map(dbToV);
+    syncOk();
+  } catch(e) {
+    syncErr();
+    try { vehicles = JSON.parse(localStorage.getItem('tv_bk')||'[]'); } catch(e2) { vehicles = []; }
+  }
+  cleanOld(); renderList();
+}
+
+async function saveV(v) {
+  syncStart();
+  try {
+    var res = await sb.from('vehicles').upsert(vToDb(v));
+    if (res.error) throw res.error;
+    syncOk(); localStorage.setItem('tv_bk', JSON.stringify(vehicles));
+  } catch(e) { syncErr(); toast('Error guardant. Comprova connexio.', 'warn'); }
+}
+
+async function delDB(id) {
+  syncStart();
+  try { var r = await sb.from('vehicles').delete().eq('id',id); if(r.error) throw r.error; syncOk(); }
+  catch(e) { syncErr(); }
+}
+
+// TABS
+function setTab(name) {
+  curTab = name;
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-'+name).classList.add('active');
+
+  // Show/hide nav and FAB
+  var bnav = document.getElementById('bnav');
+  var fab = document.getElementById('fab');
+  var sbar = document.getElementById('searchbar');
+
+  if (name === 'add') {
+    bnav.classList.add('hidden');
+    fab.classList.add('hidden');
+    sbar.style.display = 'none';
+  } else {
+    bnav.classList.remove('hidden');
+    fab.classList.remove('hidden');
+    sbar.style.display = 'block';
+    // highlight nav
+    document.querySelectorAll('.nbtn').forEach(function(b) { b.classList.remove('sel'); });
+    var nb = document.getElementById('nav-'+name);
+    if (nb) nb.classList.add('sel');
+  }
+
+  if (name === 'map') { initMap(); setTimeout(renderMap, 300); }
+  else if (name !== 'add') renderList();
+}
+
+// RENDER
+function renderList() {
+  var q = (document.getElementById('search').value||'').toLowerCase().trim();
+  var active = vehicles.filter(function(v) { return v.status !== 'done'; });
+  var done = vehicles.filter(function(v) { return v.status === 'done'; });
+  function filt(a) { return q ? a.filter(function(v){ return v.plate.toLowerCase().indexOf(q)>=0||v.client.toLowerCase().indexOf(q)>=0; }) : a; }
+  renderSection('list-active', filt(active));
+  renderSection('list-done', filt(done));
+  document.getElementById('badge').textContent = active.length;
+}
+
+function isrc(p) {
+  if (!p||!p.b64) return '';
+  return p.b64.indexOf('data:')===0 ? p.b64 : 'data:image/jpeg;base64,'+p.b64;
+}
+
+function renderSection(elId, arr) {
+  var el = document.getElementById(elId);
+  if (!arr.length) {
+    el.innerHTML = '<div class="empty"><span class="empty-ico">&#x1F697;</span><div class="empty-txt">Cap vehicle aqui.<br>Prem <strong>+ Afegir vehicle</strong>.</div></div>';
+    return;
+  }
+  var html = '';
+  for (var i=0; i<arr.length; i++) {
+    var v = arr[i];
+    var hl = v.parkedLat!=null;
+    var cls = v.status==='done'?'vdone':(hl?'loc':'noloc');
+    var pc = v.status==='ready'?'pill-ready':v.status==='done'?'pill-done':'pill-repair';
+    var deliveredStr = '';
+    if (v.status === 'done' && v.deliveredAt) {
+      var dd = new Date(v.deliveredAt);
+      var day = String(dd.getDate()).padStart(2,'0');
+      var mon = String(dd.getMonth()+1).padStart(2,'0');
+      var yr = dd.getFullYear();
+      var hr = String(dd.getHours()).padStart(2,'0');
+      var mn = String(dd.getMinutes()).padStart(2,'0');
+      deliveredStr = ' ' + day + '/' + mon + '/' + yr + ' ' + hr + ':' + mn;
+    }
+    var pl = v.status==='ready'?'&#x2705; Llest':v.status==='done'?'&#x1F4E6; Lliurat'+deliveredStr:'&#x1F527; Reparant';
+    var lp = hl ? '<div class="vloc">&#x1F4CD; '+(v.parkedAddress||v.parkedLat.toFixed(5)+', '+v.parkedLng.toFixed(5))+'</div>'
+      : (v.clientLocation?'<div class="vloc">&#x1F4AC; '+v.clientLocation.slice(0,60)+(v.clientLocation.length>60?'...':'')+'</div>':'');
+    var np = v.notes?'<div class="vnotes">&#x1F4DD; '+v.notes.slice(0,60)+'</div>':'';
+    var mc = (v.model||v.color)?'<div class="vmodel">&#x1F697; '+[v.model,v.color].filter(Boolean).join(' &middot; ')+'</div>':'';
+    var s0 = v.photos&&v.photos.length?isrc(v.photos[0]):'';
+    var th = s0?'<img class="vthumb" src="'+s0+'" onclick="event.stopPropagation();openModal(\''+v.id+'\')">':'';
+    var wa = v.phone?'<button class="vact vact-wa" onclick="event.stopPropagation();sendWA(\''+v.id+'\')">&#x1F4AC;</button>':'';
+    // Deliver button only for non-done
+    var deliverBtn = v.status!=='done' ? '<button class="vact vact-deliver" onclick="event.stopPropagation();quickDeliver(\''+v.id+'\')">&#x2705; Lliurat</button>' : '';
+    html += '<div class="vcard '+cls+'" onclick="openModal(\''+v.id+'\')">'
+      +th
+      +'<div class="vplate">'+v.plate+'</div>'
+      +'<div class="vclient">'+v.client+(v.phone?' &middot; '+v.phone:'')+'</div>'
+      +mc+lp+np
+      +'<div class="vrow">'
+      +'<span class="vpill '+pc+'">'+pl+'</span>'
+      +'<div class="vacts" onclick="event.stopPropagation()">'+deliverBtn+wa
+      +'<button class="vact vact-del" onclick="event.stopPropagation();delVehicle(\''+v.id+'\')">&#x1F5D1;</button>'
+      +'</div></div></div>';
+  }
+  el.innerHTML = html;
+}
+
+// QUICK DELIVER
+async function quickDeliver(id) {
+  var v = vehicles.find(function(x){return x.id===id;});
+  if (!v) return;
+  if (!confirm('Marcar el vehicle '+v.plate+' com a LLIURAT?')) return;
+  v.status = 'done';
+  if (!v.deliveredAt) v.deliveredAt = new Date().toISOString();
+  await saveV(v);
+  toast('Vehicle '+v.plate+' marcat com a lliurat!', 'ok');
+  renderList();
+}
+
+// MAP
+function initMap() {
+  if (mapReady) return; mapReady=true;
+  var css=document.createElement('link'); css.rel='stylesheet'; css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+  var s=document.createElement('script'); s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; s.onload=renderMap; document.head.appendChild(s);
+}
+
+function renderMap() {
+  if (typeof L==='undefined') return;
+  var wl = vehicles.filter(function(v){return v.status!=='done'&&v.parkedLat;});
+  var ct = document.getElementById('map-ct');
+  var lg = document.getElementById('map-lg');
+  if (!wl.length) {
+    ct.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--mu);font-size:15px;flex-direction:column;gap:12px;padding:20px;text-align:center"><span style="font-size:48px">&#x1F5FA;</span>Cap vehicle amb GPS guardat.<br><small>Afegeix un vehicle i guarda la ubicacio.</small></div>';
+    lg.innerHTML=''; return;
+  }
+  if (!mapInst) {
+    mapInst=L.map('map-ct');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(mapInst);
+  }
+  mapMarkers.forEach(function(m){m.remove();}); mapMarkers=[];
+  var bounds=[];
+  for (var i=0; i<wl.length; i++) {
+    var v=wl[i];
+    var color=v.status==='ready'?'#1a8a3c':'#0055cc';
+    var ex=v.model?'<br><span style="font-size:10px;opacity:.8">'+v.model+(v.color?' &middot; '+v.color:'')+'</span>':'';
+    var icon=L.divIcon({className:'',html:'<div style="background:'+color+';color:#000;font-weight:900;font-size:16px;padding:8px 14px;border-radius:24px;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.35);border:3px solid #fff;font-family:serif;letter-spacing:2px;line-height:1.3;text-align:center">'+v.plate+ex+'</div>',iconAnchor:[55,18]});
+    var popup='<div style="font-family:sans-serif;line-height:1.6"><b style="font-size:15px">'+v.plate+'</b><br>'
+      +(v.model?v.model:'')+( v.color?' &middot; '+v.color:'')+'<br>'
+      +'<span style="color:#666">'+v.client+'</span>'+(v.phone?'<br>'+v.phone:'')+'<br>'
+      +(v.parkedAddress?v.parkedAddress+'<br>':'')
+      +'<a href="https://www.google.com/maps?q='+v.parkedLat+','+v.parkedLng+'" target="_blank" style="color:#0055cc">&#x1F5FA; Google Maps</a></div>';
+    var m=L.marker([v.parkedLat,v.parkedLng],{icon:icon}).addTo(mapInst).bindPopup(popup);
+    mapMarkers.push(m); bounds.push([v.parkedLat,v.parkedLng]);
+  }
+  mapInst.fitBounds(bounds,{padding:[40,40],maxZoom:17});
+
+  var lgHtml='';
+  for (var j=0; j<wl.length; j++) {
+    var vv=wl[j];
+    var c=vv.status==='ready'?'var(--green)':'var(--blue)';
+    var l=vv.status==='ready'?'&#x2705; Llest':'&#x1F527; Reparant';
+    lgHtml+='<div class="mitem">'
+      +'<div onclick="openModal(\''+vv.id+'\')" style="flex:1;display:flex;align-items:center;gap:10px;min-width:0">'
+      +'<div class="mplate2">'+vv.plate+'</div>'
+      +'<div class="minfo">'+(vv.model||'')+(vv.color?' &middot; '+vv.color:'')+' &middot; '+vv.client+'</div>'
+      +'</div>'
+      +'<button class="mdeliver" onclick="quickDeliver(\''+vv.id+'\')">&#x2705; Lliurat</button>'
+      +'</div>';
+  }
+  lg.innerHTML=lgHtml;
+}
+
+// CONTACTS
+async function pickContact() {
+  // Contact Picker API - funciona a Safari iOS 14.5+ i Chrome Android
+  if ('contacts' in navigator && 'ContactsManager' in window) {
+    try {
+      var props = ['name','tel','email'];
+      var opts = {multiple: false};
+      var contacts = await navigator.contacts.select(props, opts);
+      if (!contacts || !contacts.length) { toast('Cap contacte seleccionat','warn'); return; }
+      var ct = contacts[0];
+      if (ct.name && ct.name[0]) document.getElementById('ic').value = ct.name[0];
+      if (ct.tel && ct.tel[0]) {
+        var ph = ct.tel[0].replace(/[\s\-\(\)]/g,'');
+        if (ph.startsWith('+34')) ph = ph.slice(3);
+        if (ph.startsWith('0034')) ph = ph.slice(4);
+        document.getElementById('iph').value = ph;
+      }
+      toast('Contacte importat!','ok');
+      return;
+    } catch(e) { console.warn('Contact Picker error:', e); }
+  }
+  // Fallback per navegadors sense Contact Picker API
+  toast('Per importar contactes: copia el nom i telefon manualment. El teu navegador no suporta acces directe als contactes.','warn');
+}
+
+// STATUS
+function setStatus(s) {
+  fStatus=s;
+  document.querySelectorAll('#ssel .spick').forEach(function(b){
+    var ds=b.getAttribute('data-s');
+    b.className='spick'+(ds===s?(s==='repair'?' sr':s==='ready'?' sg':' sd'):'');
+  });
+}
+
+// GPS
+function captureGPS(ctx, vid) {
+  var btnId=ctx==='add'?'btngps':'btngpsm';
+  var btn=document.getElementById(btnId);
+  if(btn) btn.innerHTML='<div class="spin"></div> Obtenint GPS...';
+  if(!navigator.geolocation){toast('GPS no disponible','warn');if(btn)btn.innerHTML='&#x1F4CD; Agafar GPS';return;}
+  function tryPos(hi){
+    navigator.geolocation.getCurrentPosition(async function(pos){
+      var lat=pos.coords.latitude,lng=pos.coords.longitude,addr='';
+      try{var r=await fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json&accept-language=ca');var d=await r.json();if(d.display_name)addr=d.display_name.split(',').slice(0,3).join(',').trim();}catch(e){addr=lat.toFixed(5)+', '+lng.toFixed(5);}
+      if(ctx==='add'){
+        fGPS={lat:lat,lng:lng,addr:addr};
+        var gi=document.getElementById('gpsinfo');gi.textContent='&#x2705; '+(addr||lat.toFixed(5)+', '+lng.toFixed(5));gi.style.display='block';
+        if(btn)btn.innerHTML='&#x1F504; Actualitzar GPS';
+        toast('GPS guardat!','ok');
+      }else{
+        var v=vehicles.find(function(x){return x.id===vid;});if(!v)return;
+        v.parkedLat=lat;v.parkedLng=lng;v.parkedAddress=addr;
+        await saveV(v);toast('GPS guardat!','ok');openModal(vid);
+      }
+    },function(err){if(hi){tryPos(false);return;}toast('Activa el GPS al mobil.','warn');if(btn)btn.innerHTML='&#x1F4CD; Agafar GPS';},
+    {enableHighAccuracy:hi,timeout:hi?12000:25000,maximumAge:hi?0:60000});
+  }
+  tryPos(true);
+}
+
+// PHOTOS
+async function handlePhotos(e){
+  var files=Array.from(e.target.files);if(!files.length)return;
+  var isFirst=fPhotos.length===0;
+  toast('Processant fotos...');
+  for(var i=0;i<files.length;i++){var b64=await toB64(files[i]);if(b64)fPhotos.push({key:uid(),b64:b64,isPlate:fPhotos.length===0});}
+  renderGrid();e.target.value='';
+  if(isFirst){captureGPS('add',null);try{startOCR(fPhotos[0].b64);}catch(ex){}}
+}
+
+function toB64(file){
+  return new Promise(function(res){
+    var img=new Image(),url=URL.createObjectURL(file);
+    img.onload=function(){
+      var MAX=900,w=img.width,h=img.height;
+      if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+      var c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.75).split(',')[1]);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);res('');};
+    img.src=url;
+  });
+}
+
+function renderGrid(){
+  var g=document.getElementById('pgrid');if(!g)return;
+  if(!fPhotos.length){g.innerHTML='';return;}
+  var html='';
+  for(var i=0;i<fPhotos.length;i++){
+    var p=fPhotos[i],src=isrc(p);if(!src)continue;
+    html+='<div class="pitem"><img class="pthumb" src="'+src+'" onclick="openLB('+i+')">'
+      +(p.isPlate?'<div class="pbadge">Matr.</div>':'')
+      +'<button class="pdel" onclick="delPhoto('+i+')">&#x2715;</button></div>';
+  }
+  g.innerHTML=html;
+}
+
+function delPhoto(i){fPhotos.splice(i,1);fPhotos.forEach(function(p,j){p.isPlate=j===0;});renderGrid();}
+
+// OCR
+async function startOCR(b64){
+  var bar=document.getElementById('ocrbar'),msg=document.getElementById('ocrmsg');
+  bar.classList.add('on');msg.textContent='Analitzant vehicle amb IA...';
+  try{
+    var ctrl=new AbortController();var to=setTimeout(function(){ctrl.abort();},15000);
+    var r=await fetch('https://api.anthropic.com/v1/messages',{
+      signal:ctrl.signal,method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:120,messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+        {type:'text',text:'Ets un expert en vehicles. Analitza aquesta imatge i troba: 1) La MATRICULA del vehicle (format espanyol: 4 digits + 3 lletres, ex: 1234ABC, o format antic provincial). 2) La MARCA i MODEL (ex: Volkswagen Golf, Seat Ibiza). 3) El COLOR en catala. Respon UNICAMENT amb aquest JSON sense cap altre text ni explicacio: {"matricula":"1234ABC","model":"Golf","color":"Blanc"}. Si no pots detectar algun camp amb certesa, posa null. Matricula: majuscules, sense espais ni guions. Model: nomes marca i model curts. Color: una paraula en catala.'}
+      ]}]})
+    });
+    clearTimeout(to);
+    var d=await r.json();
+    var raw=((d&&d.content&&d.content[0]&&d.content[0].text)||'').trim().replace(/```json|```/g,'').trim();
+    var result={matricula:null,model:null,color:null};
+    try{result=JSON.parse(raw);}catch(ex){}
+    var det=[];
+    if(result.matricula&&result.matricula!=='null'&&result.matricula.length>=4){document.getElementById('ip').value=result.matricula.toUpperCase().replace(/[\s-]/g,'');det.push('Matr: '+result.matricula);}
+    if(result.model&&result.model!=='null'){document.getElementById('imodel').value=result.model;det.push(result.model);}
+    if(result.color&&result.color!=='null'){document.getElementById('icolor').value=result.color;det.push(result.color);}
+    if(det.length){msg.textContent='Detectat: '+det.join(' - ');toast('Detectat: '+det.join(' - '),'ok');setTimeout(function(){bar.classList.remove('on');},5000);}
+    else{msg.textContent='No detectat. Introdueix manualment.';setTimeout(function(){bar.classList.remove('on');},3500);}
+  }catch(err){
+    msg.textContent='IA no disponible. Introdueix manualment.';
+    setTimeout(function(){bar.classList.remove('on');},3500);
+  }
+}
+
+// ADD VEHICLE
+async function addVehicle(){
+  var plate=document.getElementById('ip').value.trim().toUpperCase();
+  var client=document.getElementById('ic').value.trim();
+  if(!plate){toast('Introdueix la matricula','warn');return;}
+  if(!client){toast('Introdueix el nom del client','warn');return;}
+  var v={id:uid(),plate:plate,client:client,
+    phone:document.getElementById('iph').value.trim().replace(/\s/g,''),
+    model:document.getElementById('imodel').value.trim(),
+    color:document.getElementById('icolor').value.trim(),
+    clientLocation:document.getElementById('icl').value.trim(),
+    notes:document.getElementById('inotes').value.trim(),
+    status:fStatus,
+    photos:fPhotos.map(function(p){return{key:p.key,b64:p.b64,isPlate:p.isPlate};}),
+    parkedLat:fGPS?fGPS.lat:null,parkedLng:fGPS?fGPS.lng:null,parkedAddress:fGPS?fGPS.addr:'',
+    deliveredAt:null,createdAt:new Date().toISOString()};
+  vehicles.unshift(v);
+  await saveV(v);
+  toast('Vehicle registrat!','ok');resetForm();setTab('active');
+}
+
+function resetForm(){
+  ['ip','ic','iph','icl','inotes','imodel','icolor'].forEach(function(id){document.getElementById(id).value='';});
+  fPhotos=[];fGPS=null;fStatus='repair';
+  document.getElementById('pgrid').innerHTML='';
+  document.getElementById('ocrbar').classList.remove('on');
+  var gi=document.getElementById('gpsinfo');gi.style.display='none';gi.textContent='';
+  document.getElementById('btngps').innerHTML='&#x1F4CD; Agafar ubicacio GPS ara';
+  setStatus('repair');
+}
+
+// MODAL
+function openModal(id){
+  var v=vehicles.find(function(x){return x.id===id;});if(!v)return;
+  document.getElementById('mplate').textContent=v.plate;
+  var sC={repair:'var(--blue)',ready:'var(--green)',done:'var(--mu)'};
+  var sL={repair:'&#x1F527; Reparant',ready:'&#x2705; Llest',done:'&#x1F4E6; Lliurat'};
+  var stHtml='';
+  ['repair','ready','done'].forEach(function(s){
+    var a=v.status===s,sc=a?(s==='repair'?' sr':s==='ready'?' sg':' sd'):'';
+    stHtml+='<button class="msp'+sc+'" onclick="changeStatus(\''+id+'\',\''+s+'\')">'+sL[s]+'</button>';
+  });
+  document.getElementById('mstatus').innerHTML=stHtml;
+
+  var mc=[v.model,v.color].filter(Boolean).join(' &middot; ');
+  var deliveredInfo = '';
+  if (v.status === 'done' && v.deliveredAt) {
+    var ddd = new Date(v.deliveredAt);
+    var dstr = String(ddd.getDate()).padStart(2,'0')+'/'+String(ddd.getMonth()+1).padStart(2,'0')+'/'+ddd.getFullYear()+' '+String(ddd.getHours()).padStart(2,'0')+':'+String(ddd.getMinutes()).padStart(2,'0');
+    deliveredInfo = '<br><strong>Lliurat:</strong> &#x1F4C5; ' + dstr;
+  }
+  var h='<div class="ibox"><strong>Client:</strong> '+v.client
+    +(v.phone?'<br><strong>Tel:</strong> '+v.phone:'')
+    +(mc?'<br><strong>Vehicle:</strong> '+mc:'')+deliveredInfo+'</div>';
+  if(v.notes) h+='<div class="ibox">&#x1F4DD; <strong>Notes:</strong><br>'+v.notes+'</div>';
+  if(v.photos&&v.photos.length){
+    var imgs='';
+    for(var j=0;j<v.photos.length;j++){var s=isrc(v.photos[j]);if(s)imgs+='<img src="'+s+'" '+(v.photos[j].isPlate?'class="pl"':'')+' onclick="openLBM('+j+',\''+id+'\')">'}
+    if(imgs) h+='<div class="pscroll">'+imgs+'</div>';
+  }
+  if(v.clientLocation) h+='<div class="ibox">&#x1F5FA; <strong>Observacions:</strong><br>'+v.clientLocation+'</div>';
+  if(v.parkedLat){
+    var mu='https://www.google.com/maps?q='+v.parkedLat+','+v.parkedLng;
+    h+='<div class="ibox green">&#x1F4CD; <strong style="color:var(--green)">Aparcat a:</strong><br>'
+      +(v.parkedAddress||v.parkedLat.toFixed(6)+', '+v.parkedLng.toFixed(6))
+      +'<br><a href="'+mu+'" target="_blank">&#x1F5FA; Veure a Google Maps</a></div>';
+  }
+
+  // Botó LLIURAT destacat si el vehicle no esta lliurat
+  if(v.status!=='done'){
+    h+='<div class="divider">accio rapida</div>';
+    h+='<button class="bbtn bbtn-deliver" onclick="quickDeliver(\''+id+'\');closeModal()">&#x2705; Marcar com a LLIURAT</button>';
+  }
+
+  h+='<div class="divider">accions</div>';
+  if(v.phone) h+='<button class="bbtn bbtn-wa" onclick="sendWA(\''+id+'\')">&#x1F4AC; Enviar ubicacio per WhatsApp</button>';
+  if(v.parkedLat||v.clientLocation) h+='<button class="bbtn bbtn-copy" onclick="copyLoc(\''+id+'\')">&#x1F4CB; Copiar adreca</button>';
+  h+='<button class="bbtn bbtn-gps" id="btngpsm" onclick="captureGPS(\'modal\',\''+id+'\')">'+(v.parkedLat?'&#x1F504; Actualitzar GPS':'&#x1F4CD; Guardar ubicacio GPS')+'</button>';
+  h+='<div class="divider">fotos addicionals</div>';
+  h+='<div class="camz"><span class="camico" style="font-size:24px">&#x1F4F7;</span><span class="camlbl">Afegir mes fotos</span><input type="file" accept="image/*" capture="environment" onchange="addPhotosM(event,\''+id+'\')" multiple></div>';
+
+  document.getElementById('mcontent').innerHTML=h;
+  document.getElementById('mo').classList.add('open');
+}
+
+async function changeStatus(id,s){
+  var v=vehicles.find(function(x){return x.id===id;});if(!v)return;
+  v.status=s;if(s==='done'&&!v.deliveredAt)v.deliveredAt=new Date().toISOString();
+  await saveV(v);
+  toast(s==='ready'?'Marcat com a Llest!':s==='done'?'Marcat com a Lliurat!':'En reparacio','ok');
+  openModal(id);renderList();
+}
+
+async function addPhotosM(e,id){
+  var v=vehicles.find(function(x){return x.id===id;});if(!v)return;
+  if(!v.photos)v.photos=[];
+  toast('Processant fotos...');
+  for(var i=0;i<e.target.files.length;i++){var b64=await toB64(e.target.files[i]);if(b64)v.photos.push({key:uid(),b64:b64,isPlate:false});}
+  await saveV(v);toast('Fotos afegides!','ok');openModal(id);
+}
+
+function closeModal(){document.getElementById('mo').classList.remove('open');}
+
+// WHATSAPP
+function sendWA(id){
+  var v=vehicles.find(function(x){return x.id===id;});
+  if(!v||!v.phone){toast('No hi ha telefon del client','warn');return;}
+  var msg='Hola '+v.client+'!\nEl seu vehicle *'+v.plate+'* ja esta llest.';
+  if(v.parkedLat){var u='https://www.google.com/maps?q='+v.parkedLat+','+v.parkedLng;msg+=v.parkedAddress?'\n\nAparcat a:\n'+v.parkedAddress+'\n\n'+u:'\n\nUbicacio GPS:\n'+u;}
+  else if(v.clientLocation)msg+='\n\nAparcat a: '+v.clientLocation;
+  msg+='\n\nMoltes gracies per confiar en nosaltres!\nFins la propera!\nTALLER ARGENTONA';
+  var ph=v.phone.replace(/[^0-9+]/g,'');if(ph.indexOf('+')<0)ph='+34'+ph;
+  window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(msg),'_blank');
+  closeModal();
+}
+
+function copyLoc(id){
+  var v=vehicles.find(function(x){return x.id===id;});if(!v)return;
+  var txt=v.parkedLat?(v.parkedAddress||v.parkedLat.toFixed(5)+', '+v.parkedLng.toFixed(5)):v.clientLocation||'';
+  if(!txt){toast('No hi ha adreca guardada','warn');return;}
+  if(navigator.clipboard)navigator.clipboard.writeText(txt).then(function(){toast('Adreca copiada!','ok');});
+}
+
+// LIGHTBOX
+function openLB(idx){lbPhotos=fPhotos.map(function(p){return isrc(p);}).filter(Boolean);lbIdx=Math.min(idx,lbPhotos.length-1);if(lbPhotos.length)showLB();}
+function openLBM(idx,vid){var v=vehicles.find(function(x){return x.id===vid;});if(!v||!v.photos)return;lbPhotos=v.photos.map(function(p){return isrc(p);}).filter(Boolean);lbIdx=Math.min(idx,lbPhotos.length-1);showLB();}
+function showLB(){document.getElementById('lbimg').src=lbPhotos[lbIdx];document.getElementById('lbprev').style.display=lbPhotos.length>1?'flex':'none';document.getElementById('lbnext').style.display=lbPhotos.length>1?'flex':'none';document.getElementById('lb').classList.add('open');}
+function closeLB(){document.getElementById('lb').classList.remove('open');}
+function lbNav(d){lbIdx=(lbIdx+d+lbPhotos.length)%lbPhotos.length;showLB();}
+document.getElementById('lb').addEventListener('click',function(e){if(e.target.id==='lb'||e.target.id==='lbimg')closeLB();});
+
+// DELETE
+async function delVehicle(id){
+  if(!confirm('Eliminar aquest vehicle?'))return;
+  vehicles=vehicles.filter(function(v){return v.id!==id;});
+  await delDB(id);renderList();toast('Vehicle eliminat','');closeModal();
+}
+
+// CLEAN OLD 10 DIES
+function cleanOld(){
+  var TEN=10*24*60*60*1000,now=Date.now();
+  vehicles=vehicles.filter(function(v){
+    if(v.status!=='done')return true;
+    var t=v.deliveredAt?new Date(v.deliveredAt).getTime():new Date(v.createdAt).getTime();
+    return(now-t)<TEN;
+  });
+}
+
+// BACKUP
+function showBackup(){document.getElementById('mobk').classList.add('open');}
+function closeBackup(){document.getElementById('mobk').classList.remove('open');}
+function exportData(){
+  var d=new Date();
+  var blob=new Blob([JSON.stringify({v:vehicles,exported:d.toISOString()})],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='taller-backup-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';
+  a.click();URL.revokeObjectURL(a.href);toast('Dades exportades!','ok');
+}
+function importData(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=async function(evt){
+    try{
+      var data=JSON.parse(evt.target.result);
+      if(!data.v||!Array.isArray(data.v))throw new Error('Format incorrecte');
+      if(!confirm('Importar '+data.v.length+' vehicles?'))return;
+      for(var i=0;i<data.v.length;i++)await saveV(data.v[i]);
+      await loadVehicles();closeBackup();toast(data.v.length+' vehicles importats!','ok');
+    }catch(err){toast('Fitxer no valid','warn');}
+  };
+  reader.readAsText(file);e.target.value='';
+}
+
+// INIT - start on add screen, load data
+loadVehicles();
+</script>
+</body>
+</html>
